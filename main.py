@@ -102,6 +102,13 @@ class RSVPResponse(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 # Pydantic Models
+class StandardRSVPSubmission(BaseModel):
+    event_id: int
+    family_name: str
+    attendance: str  # Must be 'Yes', 'No', or 'Maybe'
+    members_count: Optional[int] = None  # Required if attendance is 'Yes'
+    food_preference: Optional[str] = None  # 'Vegetarian' or 'Non-Vegetarian' if attendance is 'Yes'
+
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
@@ -245,6 +252,10 @@ async def login_page():
 async def dashboard_page():
     return FileResponse(Path("dashboard.html"), media_type="text/html")
 
+@app.get("/rsvp_form_sample.html")
+async def rsvp_sample_page():
+    return FileResponse(Path("rsvp_form_sample.html"), media_type="text/html")
+
 # Authentication endpoints
 @app.post("/api/user/login")
 async def login_user(user_login: UserLogin, db: Session = Depends(get_db)):
@@ -335,7 +346,48 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     }
 
 @app.get("/api/admin/users")
-async def get_users(db: Session = Depends(get_db)):
+async def get_users(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+    # If user_id is provided, return only that specific user (for regular user access)
+    if user_id:
+        # First check regular users
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            return {
+                "success": True,
+                "users": [{
+                    "id": user.id,
+                    "name": user.name,
+                    "email": user.email,
+                    "role": user.role,
+                    "wedding_date": user.wedding_date,
+                    "is_active": user.is_active,
+                    "created_at": user.created_at.isoformat(),
+                    "user_type": "user"
+                }]
+            }
+        
+        # Check admin users (with offset)
+        if user_id >= 10000:
+            admin_id = user_id - 10000
+            admin = db.query(Admin).filter(Admin.id == admin_id).first()
+            if admin:
+                return {
+                    "success": True,
+                    "users": [{
+                        "id": admin.id + 10000,
+                        "name": admin.name,
+                        "email": admin.email,
+                        "role": admin.role,
+                        "wedding_date": None,
+                        "is_active": admin.is_active,
+                        "created_at": admin.created_at.isoformat(),
+                        "user_type": "admin"
+                    }]
+                }
+        
+        return {"success": True, "users": []}
+    
+    # Admin access - return all users
     # Get regular users
     users = db.query(User).all()
     user_list = [
@@ -504,8 +556,14 @@ async def create_event(event: EventCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=f"Error creating event: {str(e)}")
 
 @app.get("/api/admin/events")
-async def get_events(db: Session = Depends(get_db)):
-    events = db.query(Event).all()
+async def get_events(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+    # If user_id is provided, return only events for that specific user
+    if user_id:
+        events = db.query(Event).filter(Event.user_id == user_id).all()
+    else:
+        # Admin access - return all events
+        events = db.query(Event).all()
+    
     events_with_users = []
     
     for event in events:
@@ -573,19 +631,115 @@ async def submit_rsvp(rsvp: RSVPCreate, db: Session = Depends(get_db)):
         }
     }
 
+# Standardized RSVP Form Submission Endpoint
+@app.post("/api/rsvp/standard-submit")
+async def submit_standard_rsvp(rsvp: StandardRSVPSubmission, db: Session = Depends(get_db)):
+    """
+    Standardized RSVP submission endpoint that ensures consistent data format
+    regardless of how the form questions are worded.
+    
+    Standard format:
+    1. family_name: String (required)
+    2. attendance: 'Yes', 'No', or 'Maybe' (required)
+    3. members_count: Integer (required if attendance is 'Yes')
+    4. food_preference: 'Vegetarian' or 'Non-Vegetarian' (required if attendance is 'Yes')
+    """
+    
+    # Validate attendance value
+    valid_attendance = ['Yes', 'No', 'Maybe']
+    if rsvp.attendance not in valid_attendance:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid attendance value. Must be one of: {', '.join(valid_attendance)}"
+        )
+    
+    # Validate required fields for 'Yes' attendance
+    if rsvp.attendance == 'Yes':
+        if not rsvp.members_count or rsvp.members_count <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Members count is required and must be greater than 0 when attendance is 'Yes'"
+            )
+        
+        if not rsvp.food_preference:
+            raise HTTPException(
+                status_code=400,
+                detail="Food preference is required when attendance is 'Yes'"
+            )
+        
+        # Validate food preference
+        valid_food_prefs = ['Vegetarian', 'Non-Vegetarian']
+        if rsvp.food_preference not in valid_food_prefs:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid food preference. Must be one of: {', '.join(valid_food_prefs)}"
+            )
+    
+    # Check if event exists
+    event = db.query(Event).filter(Event.id == rsvp.event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Check for duplicate RSVP from same family for same event
+    existing_rsvp = db.query(RSVPResponse).filter(
+        RSVPResponse.event_id == rsvp.event_id,
+        RSVPResponse.family_name == rsvp.family_name
+    ).first()
+    
+    if existing_rsvp:
+        raise HTTPException(
+            status_code=400,
+            detail="RSVP already submitted for this family and event"
+        )
+    
+    # Create standardized RSVP response
+    db_rsvp = RSVPResponse(
+        event_id=rsvp.event_id,
+        family_name=rsvp.family_name.strip(),
+        attendance=rsvp.attendance,
+        members_count=rsvp.members_count if rsvp.attendance == 'Yes' else None,
+        food_preference=rsvp.food_preference if rsvp.attendance == 'Yes' else None
+    )
+    
+    db.add(db_rsvp)
+    db.commit()
+    db.refresh(db_rsvp)
+    
+    return {
+        "success": True,
+        "message": "RSVP submitted successfully",
+        "rsvp": {
+            "id": db_rsvp.id,
+            "event_id": db_rsvp.event_id,
+            "family_name": db_rsvp.family_name,
+            "attendance": db_rsvp.attendance,
+            "members_count": db_rsvp.members_count,
+            "food_preference": db_rsvp.food_preference,
+            "submitted_at": db_rsvp.created_at.isoformat()
+        }
+    }
+
 @app.get("/api/admin/rsvp-responses")
-async def get_rsvp_responses(db: Session = Depends(get_db)):
-    responses = db.query(RSVPResponse).all()
+async def get_rsvp_responses(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+    if user_id:
+        # Filter RSVP responses for specific user's events
+        responses = db.query(RSVPResponse).join(Event, RSVPResponse.event_id == Event.id).filter(Event.user_id == user_id).all()
+    else:
+        # Admin view - all responses
+        responses = db.query(RSVPResponse).all()
+    
     return {
         "success": True,
         "responses": [
             {
                 "id": response.id,
                 "event_id": response.event_id,
+                "event_name": f"{response.event.bride_name} & {response.event.groom_name}" if hasattr(response, 'event') and response.event else None,
                 "family_name": response.family_name,
                 "attendance": response.attendance,
                 "members_count": response.members_count,
                 "food_preference": response.food_preference,
+                "message": response.message if hasattr(response, 'message') else None,
                 "created_at": response.created_at.isoformat()
             }
             for response in responses
@@ -804,13 +958,24 @@ async def delete_form_response(response_id: int, db: Session = Depends(get_db)):
 
 # Dashboard stats endpoint
 @app.get("/api/admin/stats")
-async def get_dashboard_stats(db: Session = Depends(get_db)):
-    total_users = db.query(User).count()
-    total_events = db.query(Event).count()
-    total_rsvps = db.query(RSVPResponse).count()
-    active_events = db.query(Event).filter(Event.is_active == True).count()
-    total_form_templates = db.query(FormTemplate).count()
-    total_form_responses = db.query(FormResponse).count()
+async def get_dashboard_stats(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+    if user_id:
+        # User-specific stats
+        total_users = 1  # Only the user themselves
+        total_events = db.query(Event).filter(Event.user_id == user_id).count()
+        total_rsvps = db.query(RSVPResponse).join(Event, RSVPResponse.event_id == Event.id).filter(Event.user_id == user_id).count()
+        active_events = db.query(Event).filter(Event.user_id == user_id, Event.is_active == True).count()
+        # Form templates and responses are not user-specific in current schema
+        total_form_templates = 0
+        total_form_responses = 0
+    else:
+        # Admin stats (all data)
+        total_users = db.query(User).count()
+        total_events = db.query(Event).count()
+        total_rsvps = db.query(RSVPResponse).count()
+        active_events = db.query(Event).filter(Event.is_active == True).count()
+        total_form_templates = db.query(FormTemplate).count()
+        total_form_responses = db.query(FormResponse).count()
     
     return {
         "success": True,

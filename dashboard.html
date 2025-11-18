@@ -639,6 +639,10 @@
                 <i class="fas fa-calendar-alt"></i>
                 Events
             </a>
+            <a href="#" class="nav-item" onclick="showSection('rsvp-responses')">
+                <i class="fas fa-envelope-open-text"></i>
+                RSVP Responses
+            </a>
         </div>
     </nav>
 
@@ -653,7 +657,7 @@
                 </h1>
             </div>
             
-            <div class="stats-grid">
+            <div class="stats-grid" id="adminStatsGrid">
                 <div class="stat-card">
                     <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
                         <i class="fas fa-users"></i>
@@ -681,6 +685,51 @@
                     </div>
                     <div class="stat-number" id="activeEvents">0</div>
                     <div class="stat-label">Active Events</div>
+                </div>
+            </div>
+            
+            <!-- User-specific stats grid -->
+            <div class="stats-grid" id="userStatsGrid" style="display: none;">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <div class="stat-number" id="userTotalEvents">0</div>
+                    <div class="stat-label">My Events</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="stat-number" id="userTotalRSVPs">0</div>
+                    <div class="stat-label">RSVP Responses</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-number" id="userActiveEvents">0</div>
+                    <div class="stat-label">Active Events</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="stat-number" id="upcomingEventsCount">0</div>
+                    <div class="stat-label">Upcoming Events</div>
+                </div>
+            </div>
+            
+            <!-- Upcoming Events Section for Users -->
+            <div id="upcomingEventsSection" style="display: none;">
+                <div class="section-header" style="margin-top: 40px;">
+                    <h2 class="section-title" style="font-size: 24px;">
+                        <i class="fas fa-calendar-check"></i>
+                        Upcoming Events
+                    </h2>
+                </div>
+                <div id="upcomingEventsList">
+                    <!-- Upcoming events will be loaded here -->
                 </div>
             </div>
         </section>
@@ -780,6 +829,80 @@
                     </thead>
                     <tbody id="eventsTableBody">
                         <!-- Events will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- RSVP Responses Section -->
+        <section class="content-section" id="rsvp-responses">
+            <div class="section-header">
+                <h1 class="section-title">
+                    <i class="fas fa-envelope-open-text"></i>
+                    RSVP Responses
+                </h1>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="downloadRSVPData('csv')">
+                        <i class="fas fa-download"></i>
+                        Download CSV
+                    </button>
+                    <button class="btn btn-secondary" onclick="downloadRSVPData('pdf')">
+                        <i class="fas fa-file-pdf"></i>
+                        Download PDF
+                    </button>
+                </div>
+            </div>
+            
+            <div class="alert" id="rsvpAlert"></div>
+            
+            <!-- RSVP Summary Statistics -->
+            <div class="stats-grid" style="margin-bottom: 30px;">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-number" id="totalFamiliesRegistered">0</div>
+                    <div class="stat-label">Families Registered</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="stat-number" id="predictedAttendees">0</div>
+                    <div class="stat-label">Predicted Attendees</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <div class="stat-number" id="predictedVegCount">0</div>
+                    <div class="stat-label">Predicted Vegetarian</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                        <i class="fas fa-drumstick-bite"></i>
+                    </div>
+                    <div class="stat-number" id="predictedNonVegCount">0</div>
+                    <div class="stat-label">Predicted Non-Veg</div>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Event</th>
+                            <th>Family Name</th>
+                            <th>Attendance</th>
+                            <th>Members Count</th>
+                            <th>Food Preference</th>
+                            <th>Message</th>
+                            <th>Submitted</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rsvpResponsesTableBody">
+                        <!-- RSVP responses will be loaded here -->
                     </tbody>
                 </table>
             </div>
@@ -928,22 +1051,77 @@
             updateUIForUserType(userType);
         }
         
+        // Get current user ID
+        function getCurrentUserId() {
+            const userType = localStorage.getItem('userType');
+            if (userType === 'admin') {
+                const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
+                return adminData.id;
+            } else {
+                const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+                return userData.id;
+            }
+        }
+        
+        // Check if current user is admin
+        function isAdmin() {
+            return localStorage.getItem('userType') === 'admin';
+        }
+        
         // Update UI based on user type
         function updateUIForUserType(userType) {
-            const adminSections = document.querySelectorAll('.nav-item[onclick*="admin"], .nav-item[onclick*="users"]');
+            const adminSections = document.querySelectorAll('.nav-item[onclick*="admin"]');
             const createButtons = document.querySelectorAll('.btn[onclick*="create"], .btn[onclick*="Create"]');
+            const headerTitle = document.querySelector('.logo');
+            const sidebarTitle = document.querySelector('.sidebar-title');
+            const sidebarSubtitle = document.querySelector('.sidebar-subtitle');
             
             if (userType === 'user') {
-                // Hide admin-only sections for regular users
+                // Update titles for regular users
+                if (headerTitle) headerTitle.textContent = 'WedCraft Dashboard';
+                if (sidebarTitle) sidebarTitle.textContent = 'My Dashboard';
+                if (sidebarSubtitle) sidebarSubtitle.textContent = 'Manage your wedding';
+                
+                // Hide admin-only sections and users section for regular users
                 adminSections.forEach(section => {
                     section.style.display = 'none';
                 });
+                
+                // Hide Users section for regular users
+                const usersSection = document.querySelector('.nav-item[onclick*="users"]');
+                if (usersSection) {
+                    usersSection.style.display = 'none';
+                }
+                
                 // Hide create buttons for regular users
                 createButtons.forEach(btn => {
                     if (btn.textContent.includes('Create')) {
                         btn.style.display = 'none';
                     }
                 });
+                
+                // Update section titles for users
+                const userSectionTitle = document.querySelector('#users .section-title');
+                if (userSectionTitle) {
+                    userSectionTitle.innerHTML = '<i class="fas fa-user"></i> My Account';
+                }
+                
+                const eventSectionTitle = document.querySelector('#events .section-title');
+                if (eventSectionTitle) {
+                    eventSectionTitle.innerHTML = '<i class="fas fa-calendar-alt"></i> My Events';
+                }
+                
+                // Show upcoming events section for users
+                const upcomingEventsSection = document.getElementById('upcomingEventsSection');
+                if (upcomingEventsSection) {
+                    upcomingEventsSection.style.display = 'block';
+                }
+                
+                // Show user-specific stats grid and hide admin stats grid
+                const adminStatsGrid = document.getElementById('adminStatsGrid');
+                const userStatsGrid = document.getElementById('userStatsGrid');
+                if (adminStatsGrid) adminStatsGrid.style.display = 'none';
+                if (userStatsGrid) userStatsGrid.style.display = 'grid';
             }
         }
 
@@ -997,6 +1175,9 @@
                 case 'rsvp-forms':
                     loadRSVPResponses();
                     break;
+                case 'rsvp-responses':
+                    loadUserRSVPResponses();
+                    break;
                 case 'dashboard':
                     loadDashboardData();
                     break;
@@ -1006,19 +1187,39 @@
         // Load dashboard data
         async function loadDashboardData() {
             try {
+                // Build URL with user_id parameter for regular users
+                let statsUrl = '/api/admin/stats';
+                if (!isAdmin()) {
+                    const userId = getCurrentUserId();
+                    statsUrl += `?user_id=${userId}`;
+                }
+                
                 // Load dashboard stats from backend
-                const statsResponse = await fetch('/api/admin/stats');
+                const statsResponse = await fetch(statsUrl);
                 if (statsResponse.ok) {
                     const statsData = await statsResponse.json();
                     if (statsData.success) {
-                        document.getElementById('totalUsers').textContent = statsData.stats.total_users;
-                        document.getElementById('totalEvents').textContent = statsData.stats.total_events;
-                        document.getElementById('totalRSVPs').textContent = statsData.stats.total_rsvps;
-                        document.getElementById('activeEvents').textContent = statsData.stats.active_events;
+                        if (isAdmin()) {
+                            // Admin stats
+                            document.getElementById('totalUsers').textContent = statsData.stats.total_users;
+                            document.getElementById('totalEvents').textContent = statsData.stats.total_events;
+                            document.getElementById('totalRSVPs').textContent = statsData.stats.total_rsvps;
+                            document.getElementById('activeEvents').textContent = statsData.stats.active_events;
+                        } else {
+                            // User stats
+                            document.getElementById('userTotalEvents').textContent = statsData.stats.total_events;
+                            document.getElementById('userTotalRSVPs').textContent = statsData.stats.total_rsvps;
+                            document.getElementById('userActiveEvents').textContent = statsData.stats.active_events;
+                        }
                     }
                 } else {
                     // Fallback: load individual counts
                     await loadIndividualStats();
+                }
+                
+                // Load upcoming events for users
+                if (!isAdmin()) {
+                    await loadUpcomingEvents();
                 }
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
@@ -1062,7 +1263,14 @@
         // Load users
         async function loadUsers() {
             try {
-                const response = await fetch('/api/admin/users');
+                // Build URL with user_id parameter for regular users
+                let usersUrl = '/api/admin/users';
+                if (!isAdmin()) {
+                    const userId = getCurrentUserId();
+                    usersUrl += `?user_id=${userId}`;
+                }
+                
+                const response = await fetch(usersUrl);
                 if (response.ok) {
                     const data = await response.json();
                     users = data.users || [];
@@ -1146,7 +1354,14 @@
         // Load events
         async function loadEvents() {
             try {
-                const response = await fetch('/api/admin/events');
+                // Build URL with user_id parameter for regular users
+                let eventsUrl = '/api/admin/events';
+                if (!isAdmin()) {
+                    const userId = getCurrentUserId();
+                    eventsUrl += `?user_id=${userId}`;
+                }
+                
+                const response = await fetch(eventsUrl);
                 if (response.ok) {
                     const data = await response.json();
                     events = data.events || [];
@@ -1161,6 +1376,97 @@
                 events = [];
                 renderEventsTable();
             }
+        }
+        
+        // Load upcoming events for users
+        async function loadUpcomingEvents() {
+            try {
+                const userId = getCurrentUserId();
+                const response = await fetch(`/api/admin/events?user_id=${userId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const events = data.events || [];
+                    
+                    // Filter for upcoming events (future dates)
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
+                    const upcomingEvents = events.filter(event => {
+                        const eventDate = new Date(event.wedding_date);
+                        return eventDate >= today;
+                    }).sort((a, b) => new Date(a.wedding_date) - new Date(b.wedding_date));
+                    
+                    renderUpcomingEvents(upcomingEvents);
+                } else {
+                    renderUpcomingEvents([]);
+                }
+            } catch (error) {
+                console.error('Error loading upcoming events:', error);
+                renderUpcomingEvents([]);
+            }
+        }
+        
+        // Render upcoming events
+        function renderUpcomingEvents(upcomingEvents) {
+            const container = document.getElementById('upcomingEventsList');
+            container.innerHTML = '';
+            
+            // Update upcoming events count in stats
+            const upcomingCountElement = document.getElementById('upcomingEventsCount');
+            if (upcomingCountElement) {
+                upcomingCountElement.textContent = upcomingEvents.length;
+            }
+            
+            if (upcomingEvents.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <i class="fas fa-calendar-times" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
+                        <p style="font-size: 18px; margin: 0;">No upcoming events found</p>
+                        <p style="font-size: 14px; margin: 10px 0 0 0;">Create your first wedding event to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            upcomingEvents.forEach(event => {
+                const eventDate = new Date(event.wedding_date);
+                const daysUntil = Math.ceil((eventDate - new Date()) / (1000 * 60 * 60 * 24));
+                
+                const eventCard = document.createElement('div');
+                eventCard.className = 'stat-card';
+                eventCard.style.marginBottom = '20px';
+                eventCard.innerHTML = `
+                    <div style="display: flex; justify-content: between; align-items: start;">
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 10px 0; color: #333; font-size: 20px;">
+                                ${event.bride_name} & ${event.groom_name}
+                            </h3>
+                            <p style="margin: 5px 0; color: #666;">
+                                <i class="fas fa-calendar"></i> ${eventDate.toLocaleDateString('en-US', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                })}
+                            </p>
+                            <p style="margin: 5px 0; color: #666;">
+                                <i class="fas fa-map-marker-alt"></i> ${event.location}
+                            </p>
+                            ${event.invitation_message ? `
+                                <p style="margin: 10px 0 0 0; color: #555; font-style: italic;">
+                                    "${event.invitation_message}"
+                                </p>
+                            ` : ''}
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px;">
+                                ${daysUntil === 0 ? 'Today!' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil} days`}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(eventCard);
+            });
         }
 
         // Render events table
@@ -1248,6 +1554,249 @@
                 `;
                 tbody.appendChild(row);
             });
+        }
+
+        // Load user-specific RSVP responses
+        async function loadUserRSVPResponses() {
+            try {
+                const userId = getCurrentUserId();
+                const response = await fetch(`/api/admin/rsvp-responses?user_id=${userId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const userRSVPResponses = data.responses || [];
+                    renderUserRSVPTable(userRSVPResponses);
+                } else {
+                    console.log('No RSVP responses found for user');
+                    renderUserRSVPTable([]);
+                }
+            } catch (error) {
+                console.error('Error loading user RSVP responses:', error);
+                renderUserRSVPTable([]);
+            }
+        }
+
+        // Render user RSVP responses table
+        function renderUserRSVPTable(rsvpResponses) {
+            const tbody = document.getElementById('rsvpResponsesTableBody');
+            tbody.innerHTML = '';
+
+            // Calculate summary statistics
+            const totalFamilies = rsvpResponses.length;
+            const yesResponses = rsvpResponses.filter(r => r.attendance.toLowerCase() === 'yes');
+            const maybeResponses = rsvpResponses.filter(r => r.attendance.toLowerCase() === 'maybe');
+            
+            // Dummy ML predictions (replace with actual model later)
+            const confirmedAttendees = yesResponses.reduce((sum, r) => sum + (r.members_count || 0), 0);
+            const maybeAttendees = maybeResponses.reduce((sum, r) => sum + (r.members_count || 0), 0);
+            
+            // ML prediction: 70% of "maybe" responses typically become "yes"
+            const predictedAttendees = confirmedAttendees + Math.round(maybeAttendees * 0.7);
+            
+            // ML prediction: Food preferences based on historical data
+            const vegResponses = rsvpResponses.filter(r => r.food_preference && r.food_preference.toLowerCase().includes('veg') && !r.food_preference.toLowerCase().includes('non'));
+            const nonVegResponses = rsvpResponses.filter(r => r.food_preference && r.food_preference.toLowerCase().includes('non'));
+            
+            // Predict food preferences for attendees (dummy model)
+            const predictedVegCount = Math.round(predictedAttendees * 0.6); // 60% vegetarian prediction
+            const predictedNonVegCount = predictedAttendees - predictedVegCount;
+            
+            // Update summary statistics
+            document.getElementById('totalFamiliesRegistered').textContent = totalFamilies;
+            document.getElementById('predictedAttendees').textContent = predictedAttendees;
+            document.getElementById('predictedVegCount').textContent = predictedVegCount;
+            document.getElementById('predictedNonVegCount').textContent = predictedNonVegCount;
+
+            if (rsvpResponses.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #666;">No RSVP responses found</td></tr>';
+                // Reset stats to 0
+                document.getElementById('totalFamiliesRegistered').textContent = '0';
+                document.getElementById('predictedAttendees').textContent = '0';
+                document.getElementById('predictedVegCount').textContent = '0';
+                document.getElementById('predictedNonVegCount').textContent = '0';
+                return;
+            }
+
+            rsvpResponses.forEach(rsvp => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${rsvp.id}</td>
+                    <td>${rsvp.event_name || 'Event ID: ' + rsvp.event_id}</td>
+                    <td>${rsvp.family_name}</td>
+                    <td><span class="badge badge-${rsvp.attendance.toLowerCase()}">${rsvp.attendance}</span></td>
+                    <td>${rsvp.members_count || 'N/A'}</td>
+                    <td>${rsvp.food_preference || 'N/A'}</td>
+                    <td>${rsvp.message || 'N/A'}</td>
+                    <td>${new Date(rsvp.created_at).toLocaleDateString()}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Download RSVP data in CSV or PDF format
+        async function downloadRSVPData(format) {
+            try {
+                const userId = getCurrentUserId();
+                const response = await fetch(`/api/admin/rsvp-responses?user_id=${userId}`);
+                
+                if (!response.ok) {
+                    showAlert('rsvpAlert', 'Failed to fetch RSVP data for download', 'error');
+                    return;
+                }
+                
+                const data = await response.json();
+                const rsvpResponses = data.responses || [];
+                
+                if (rsvpResponses.length === 0) {
+                    showAlert('rsvpAlert', 'No RSVP data available to download', 'error');
+                    return;
+                }
+                
+                if (format === 'csv') {
+                    downloadCSV(rsvpResponses);
+                } else if (format === 'pdf') {
+                    downloadPDF(rsvpResponses);
+                }
+                
+                showAlert('rsvpAlert', `RSVP data downloaded successfully as ${format.toUpperCase()}`, 'success');
+            } catch (error) {
+                console.error('Error downloading RSVP data:', error);
+                showAlert('rsvpAlert', 'Error downloading RSVP data', 'error');
+            }
+        }
+
+        // Download RSVP data as CSV
+        function downloadCSV(rsvpResponses) {
+            const headers = ['ID', 'Event', 'Family Name', 'Attendance', 'Members Count', 'Food Preference', 'Message', 'Submitted Date'];
+            const csvContent = [
+                headers.join(','),
+                ...rsvpResponses.map(rsvp => [
+                    rsvp.id,
+                    `"${rsvp.event_name || 'Event ID: ' + rsvp.event_id}"`,
+                    `"${rsvp.family_name}"`,
+                    rsvp.attendance,
+                    rsvp.members_count || 0,
+                    `"${rsvp.food_preference || 'N/A'}"`,
+                    `"${rsvp.message || 'N/A'}"`,
+                    new Date(rsvp.created_at).toLocaleDateString()
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `rsvp_responses_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Download RSVP data as PDF
+        function downloadPDF(rsvpResponses) {
+            // Create a simple HTML content for PDF
+            const htmlContent = `
+                <html>
+                <head>
+                    <title>RSVP Responses Report</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        h1 { color: #667eea; text-align: center; margin-bottom: 30px; }
+                        .summary { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+                        .summary h2 { margin-top: 0; color: #333; }
+                        .stats { display: flex; justify-content: space-around; margin: 20px 0; }
+                        .stat { text-align: center; }
+                        .stat-number { font-size: 24px; font-weight: bold; color: #667eea; }
+                        .stat-label { font-size: 14px; color: #666; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                        th { background-color: #667eea; color: white; }
+                        tr:nth-child(even) { background-color: #f2f2f2; }
+                        .badge-yes { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; }
+                        .badge-no { background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 4px; }
+                        .badge-maybe { background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>RSVP Responses Report</h1>
+                    <div class="summary">
+                        <h2>Summary Statistics</h2>
+                        <div class="stats">
+                            <div class="stat">
+                                <div class="stat-number">${rsvpResponses.length}</div>
+                                <div class="stat-label">Families Registered</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number">${calculatePredictedAttendees(rsvpResponses)}</div>
+                                <div class="stat-label">Predicted Attendees</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number">${Math.round(calculatePredictedAttendees(rsvpResponses) * 0.6)}</div>
+                                <div class="stat-label">Predicted Vegetarian</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number">${calculatePredictedAttendees(rsvpResponses) - Math.round(calculatePredictedAttendees(rsvpResponses) * 0.6)}</div>
+                                <div class="stat-label">Predicted Non-Veg</div>
+                            </div>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Event</th>
+                                <th>Family Name</th>
+                                <th>Attendance</th>
+                                <th>Members</th>
+                                <th>Food Preference</th>
+                                <th>Message</th>
+                                <th>Submitted</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rsvpResponses.map(rsvp => `
+                                <tr>
+                                    <td>${rsvp.id}</td>
+                                    <td>${rsvp.event_name || 'Event ID: ' + rsvp.event_id}</td>
+                                    <td>${rsvp.family_name}</td>
+                                    <td><span class="badge-${rsvp.attendance.toLowerCase()}">${rsvp.attendance}</span></td>
+                                    <td>${rsvp.members_count || 'N/A'}</td>
+                                    <td>${rsvp.food_preference || 'N/A'}</td>
+                                    <td>${rsvp.message || 'N/A'}</td>
+                                    <td>${new Date(rsvp.created_at).toLocaleDateString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 30px; text-align: center; color: #666; font-size: 12px;">
+                        Generated on ${new Date().toLocaleDateString()} | WedCraft RSVP Management System
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // Create a new window and print as PDF
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+            printWindow.focus();
+            
+            // Wait for content to load then trigger print
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+        }
+
+        // Helper function to calculate predicted attendees
+        function calculatePredictedAttendees(rsvpResponses) {
+            const yesResponses = rsvpResponses.filter(r => r.attendance.toLowerCase() === 'yes');
+            const maybeResponses = rsvpResponses.filter(r => r.attendance.toLowerCase() === 'maybe');
+            
+            const confirmedAttendees = yesResponses.reduce((sum, r) => sum + (r.members_count || 0), 0);
+            const maybeAttendees = maybeResponses.reduce((sum, r) => sum + (r.members_count || 0), 0);
+            
+            return confirmedAttendees + Math.round(maybeAttendees * 0.7);
         }
 
         // Open create user modal

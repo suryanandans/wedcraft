@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding RSVP - Standardized Form</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .title {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+
+        .radio-option label {
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .conditional-fields {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .conditional-fields.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            border: 1px solid rgba(76, 175, 80, 0.2);
+        }
+
+        .alert.error {
+            background: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            border: 1px solid rgba(244, 67, 54, 0.2);
+        }
+
+        .alert.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        .info-box {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .info-box p {
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Wedding RSVP</h1>
+            <p class="subtitle">Please respond by [Date]</p>
+        </div>
+
+        <div class="info-box">
+            <h3>Standardized RSVP Form</h3>
+            <p>This form demonstrates how different question wordings map to the same standardized data structure. Regardless of how questions are phrased, the responses are always stored consistently.</p>
+        </div>
+
+        <div class="alert" id="alertMessage"></div>
+
+        <form id="rsvpForm">
+            <div class="form-group">
+                <label class="form-label">Event ID (for testing)</label>
+                <input type="number" class="form-input" id="eventId" value="2" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">What's your family name? / Please enter your family name:</label>
+                <input type="text" class="form-input" id="familyName" placeholder="e.g., The Smith Family" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Will you be able to join us for our special day? / Can you attend our wedding celebration?</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="attendYes" name="attendance" value="Yes">
+                        <label for="attendYes">Yes, we'll be there!</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="attendMaybe" name="attendance" value="Maybe">
+                        <label for="attendMaybe">Maybe / Not sure</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="attendNo" name="attendance" value="No">
+                        <label for="attendNo">Sorry, can't make it</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="conditional-fields" id="conditionalFields">
+                <div class="form-group">
+                    <label class="form-label">How many people from your family will attend? / Total number of guests:</label>
+                    <input type="number" class="form-input" id="membersCount" min="1" placeholder="e.g., 4">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Do you prefer vegetarian or non-vegetarian food? / Meal preference:</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="foodVeg" name="foodPreference" value="Vegetarian">
+                            <label for="foodVeg">Vegetarian</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="foodNonVeg" name="foodPreference" value="Non-Vegetarian">
+                            <label for="foodNonVeg">Non-Vegetarian</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                Submit RSVP
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Show/hide conditional fields based on attendance
+        document.querySelectorAll('input[name="attendance"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const conditionalFields = document.getElementById('conditionalFields');
+                if (this.value === 'Yes') {
+                    conditionalFields.classList.add('show');
+                    // Make conditional fields required
+                    document.getElementById('membersCount').required = true;
+                    document.querySelectorAll('input[name="foodPreference"]').forEach(input => {
+                        input.required = true;
+                    });
+                } else {
+                    conditionalFields.classList.remove('show');
+                    // Remove required from conditional fields
+                    document.getElementById('membersCount').required = false;
+                    document.querySelectorAll('input[name="foodPreference"]').forEach(input => {
+                        input.required = false;
+                        input.checked = false;
+                    });
+                    document.getElementById('membersCount').value = '';
+                }
+            });
+        });
+
+        // Handle form submission
+        document.getElementById('rsvpForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const alertMessage = document.getElementById('alertMessage');
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            // Collect form data
+            const formData = {
+                event_id: parseInt(document.getElementById('eventId').value),
+                family_name: document.getElementById('familyName').value,
+                attendance: document.querySelector('input[name="attendance"]:checked')?.value
+            };
+            
+            // Add conditional fields if attendance is Yes
+            if (formData.attendance === 'Yes') {
+                formData.members_count = parseInt(document.getElementById('membersCount').value);
+                formData.food_preference = document.querySelector('input[name="foodPreference"]:checked')?.value;
+            }
+            
+            try {
+                const response = await fetch('/api/rsvp/standard-submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('RSVP submitted successfully! Thank you for your response.', 'success');
+                    document.getElementById('rsvpForm').reset();
+                    document.getElementById('conditionalFields').classList.remove('show');
+                } else {
+                    showAlert(result.detail || 'Failed to submit RSVP. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Error submitting RSVP:', error);
+                showAlert('Error submitting RSVP. Please check your connection and try again.', 'error');
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit RSVP';
+            }
+        });
+        
+        // Show alert message
+        function showAlert(message, type) {
+            const alertMessage = document.getElementById('alertMessage');
+            alertMessage.textContent = message;
+            alertMessage.className = `alert ${type} show`;
+            
+            setTimeout(() => {
+                alertMessage.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
