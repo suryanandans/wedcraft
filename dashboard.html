@@ -1175,8 +1175,11 @@
 
             events.forEach(event => {
                 const row = document.createElement('tr');
-                // Find user info if available
-                const userInfo = `User ID: ${event.user_id}`;
+                // Use user name and email if available, otherwise show user ID
+                let userInfo = event.user_name || `User ID: ${event.user_id}`;
+                if (event.user_email && event.user_name !== `User ID: ${event.user_id}`) {
+                    userInfo += ` (${event.user_email})`;
+                }
                 
                 row.innerHTML = `
                     <td>${event.id}</td>

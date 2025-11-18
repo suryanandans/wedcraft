@@ -340,13 +340,14 @@ async def get_users(db: Session = Depends(get_db)):
     users = db.query(User).all()
     user_list = [
         {
-            "id": f"user_{user.id}",
+            "id": user.id,
             "name": user.name,
             "email": user.email,
             "role": user.role,
             "wedding_date": user.wedding_date,
             "is_active": user.is_active,
-            "created_at": user.created_at.isoformat()
+            "created_at": user.created_at.isoformat(),
+            "user_type": "user"
         }
         for user in users
     ]
@@ -355,13 +356,14 @@ async def get_users(db: Session = Depends(get_db)):
     admins = db.query(Admin).all()
     admin_list = [
         {
-            "id": f"admin_{admin.id}",
+            "id": admin.id + 10000,  # Offset admin IDs to avoid conflicts
             "name": admin.name,
             "email": admin.email,
             "role": admin.role,
             "wedding_date": None,  # Admins don't have wedding dates
             "is_active": admin.is_active,
-            "created_at": admin.created_at.isoformat()
+            "created_at": admin.created_at.isoformat(),
+            "user_type": "admin"
         }
         for admin in admins
     ]
@@ -392,54 +394,157 @@ async def get_admins(db: Session = Depends(get_db)):
         ]
     }
 
+@app.delete("/api/admin/users/{user_id}")
+async def delete_user(user_id: int, db: Session = Depends(get_db)):
+    """Delete a user (handles both regular users and admins)"""
+    try:
+        # First, try to find in regular users table
+        db_user = db.query(User).filter(User.id == user_id).first()
+        
+        if db_user:
+            # This is a regular user
+            # Check if user has associated events
+            user_events = db.query(Event).filter(Event.user_id == user_id).count()
+            if user_events > 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Cannot delete user. User has {user_events} associated events. Delete events first."
+                )
+            
+            db.delete(db_user)
+            db.commit()
+            return {
+                "success": True,
+                "message": "User deleted successfully"
+            }
+        
+        # If not found in users, check if this is an admin user (with offset)
+        if user_id >= 10000:
+            admin_id = user_id - 10000
+            db_admin = db.query(Admin).filter(Admin.id == admin_id).first()
+            
+            if db_admin:
+                # Check if this is the last admin
+                admin_count = db.query(Admin).count()
+                if admin_count <= 1:
+                    raise HTTPException(status_code=400, detail="Cannot delete the last admin user")
+                
+                # Check if admin has associated events
+                admin_events = db.query(Event).filter(Event.user_id == admin_id).count()
+                if admin_events > 0:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Cannot delete admin. Admin has {admin_events} associated events. Delete events first."
+                    )
+                
+                db.delete(db_admin)
+                db.commit()
+                return {
+                    "success": True,
+                    "message": "Admin user deleted successfully"
+                }
+        
+        # If not found in either table
+        raise HTTPException(status_code=404, detail="User not found")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error deleting user: {str(e)}")
+
 # Event management endpoints
 @app.post("/api/admin/create-event")
 async def create_event(event: EventCreate, db: Session = Depends(get_db)):
-    db_event = Event(
-        user_id=event.user_id,
-        bride_name=event.bride_name,
-        groom_name=event.groom_name,
-        wedding_date=event.wedding_date,
-        location=event.location,
-        invitation_message=event.invitation_message
-    )
-    db.add(db_event)
-    db.commit()
-    db.refresh(db_event)
+    # Validate that user exists (check both regular users and admins with offset)
+    user_exists = None
+    actual_user_id = event.user_id
     
-    return {
-        "success": True,
-        "message": "Event created successfully",
-        "event": {
-            "id": db_event.id,
-            "user_id": db_event.user_id,
-            "bride_name": db_event.bride_name,
-            "groom_name": db_event.groom_name,
-            "wedding_date": db_event.wedding_date,
-            "location": db_event.location,
-            "invitation_message": db_event.invitation_message
+    if event.user_id >= 10000:
+        # This is an admin user (with offset)
+        admin_id = event.user_id - 10000
+        user_exists = db.query(Admin).filter(Admin.id == admin_id).first()
+        # For events, we'll store the actual admin ID without offset
+        actual_user_id = admin_id
+    else:
+        # This is a regular user
+        user_exists = db.query(User).filter(User.id == event.user_id).first()
+    
+    if not user_exists:
+        raise HTTPException(status_code=400, detail=f"User with ID {event.user_id} not found")
+    
+    try:
+        db_event = Event(
+            user_id=actual_user_id,
+            bride_name=event.bride_name,
+            groom_name=event.groom_name,
+            wedding_date=event.wedding_date,
+            location=event.location,
+            invitation_message=event.invitation_message
+        )
+        db.add(db_event)
+        db.commit()
+        db.refresh(db_event)
+        
+        return {
+            "success": True,
+            "message": "Event created successfully",
+            "event": {
+                "id": db_event.id,
+                "user_id": db_event.user_id,
+                "bride_name": db_event.bride_name,
+                "groom_name": db_event.groom_name,
+                "wedding_date": db_event.wedding_date,
+                "location": db_event.location,
+                "invitation_message": db_event.invitation_message
+            }
         }
-    }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Error creating event: {str(e)}")
 
 @app.get("/api/admin/events")
 async def get_events(db: Session = Depends(get_db)):
     events = db.query(Event).all()
+    events_with_users = []
+    
+    for event in events:
+        # Try to find user in regular users table first
+        user = db.query(User).filter(User.id == event.user_id).first()
+        user_name = None
+        user_email = None
+        user_role = None
+        
+        if user:
+            user_name = user.name
+            user_email = user.email
+            user_role = user.role
+        else:
+            # Try to find in admins table
+            admin = db.query(Admin).filter(Admin.id == event.user_id).first()
+            if admin:
+                user_name = admin.name
+                user_email = admin.email
+                user_role = admin.role
+        
+        events_with_users.append({
+            "id": event.id,
+            "user_id": event.user_id,
+            "user_name": user_name or f"User ID: {event.user_id}",
+            "user_email": user_email,
+            "user_role": user_role,
+            "bride_name": event.bride_name,
+            "groom_name": event.groom_name,
+            "wedding_date": event.wedding_date,
+            "location": event.location,
+            "invitation_message": event.invitation_message,
+            "is_active": event.is_active,
+            "created_at": event.created_at.isoformat()
+        })
+    
     return {
         "success": True,
-        "events": [
-            {
-                "id": event.id,
-                "user_id": event.user_id,
-                "bride_name": event.bride_name,
-                "groom_name": event.groom_name,
-                "wedding_date": event.wedding_date,
-                "location": event.location,
-                "invitation_message": event.invitation_message,
-                "is_active": event.is_active,
-                "created_at": event.created_at.isoformat()
-            }
-            for event in events
-        ]
+        "events": events_with_users
     }
 
 # RSVP endpoints
