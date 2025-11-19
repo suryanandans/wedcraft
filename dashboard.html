@@ -1087,7 +1087,6 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Event</th>
                                 <th>Family Name</th>
                                 <th>Attendance</th>
                                 <th>Members Count</th>
@@ -2119,7 +2118,7 @@
             console.log('First 3 responses:', rsvpResponses.slice(0, 3));
 
             if (rsvpResponses.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">No RSVP responses found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">No RSVP responses found</td></tr>';
                 return;
             }
 
@@ -2128,7 +2127,6 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${rsvp.id}</td>
-                    <td>${rsvp.event_name || 'Event ID: ' + rsvp.event_id}</td>
                     <td>${rsvp.family_name}</td>
                     <td><span class="badge badge-${rsvp.attendance ? rsvp.attendance.toLowerCase() : 'unknown'}">${rsvp.attendance || 'N/A'}</span></td>
                     <td>${rsvp.members_count || 'N/A'}</td>
@@ -2513,7 +2511,7 @@
             console.log(`RSVP Table Stats - Families: ${totalFamilies}, Yes: ${yesResponses.length}, Maybe: ${maybeResponses.length}`);
 
             if (rsvpResponses.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">No RSVP responses found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">No RSVP responses found</td></tr>';
                 // Reset stats to 0
                 document.getElementById('totalFamiliesRegistered').textContent = '0';
                 document.getElementById('predictedAttendees').textContent = '0';
@@ -2526,7 +2524,6 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${rsvp.id}</td>
-                    <td>${rsvp.event_name || 'Event ID: ' + rsvp.event_id}</td>
                     <td>${rsvp.family_name}</td>
                     <td><span class="badge badge-${rsvp.attendance ? rsvp.attendance.toLowerCase() : 'unknown'}">${rsvp.attendance || 'N/A'}</span></td>
                     <td>${rsvp.members_count || 'N/A'}</td>
@@ -2543,7 +2540,7 @@
             tbody.innerHTML = '';
 
             if (analyticsData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">No processed analytics data found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">No processed analytics data found</td></tr>';
                 // Reset stats to 0
                 document.getElementById('totalFamiliesRegistered').textContent = '0';
                 document.getElementById('predictedAttendees').textContent = '0';
@@ -2556,7 +2553,6 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${analytics.id}</td>
-                    <td>${analytics.event_name || 'Event ID: ' + analytics.event_id}</td>
                     <td>${analytics.total_families} families</td>
                     <td>
                         <span class="badge badge-yes">${analytics.yes_responses} Yes</span>
@@ -2566,7 +2562,6 @@
                     <td>${analytics.predicted_attendance}</td>
                     <td>Veg: ${analytics.veg_required} | Non-veg: ${analytics.nonveg_required}</td>
                     <td>${analytics.recommendations.length > 0 ? analytics.recommendations.slice(0, 2).join('; ') + (analytics.recommendations.length > 2 ? '...' : '') : 'None'}</td>
-                    <td>${new Date(analytics.processed_at).toLocaleDateString()}</td>
                 `;
                 tbody.appendChild(row);
             });
@@ -2953,7 +2948,7 @@
             tbody.innerHTML = '';
 
             if (rsvpResponses.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">No detailed RSVP responses found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">No detailed RSVP responses found</td></tr>';
                 return;
             }
 
@@ -2961,7 +2956,6 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${rsvp.id}</td>
-                    <td>${rsvp.event_name || 'Event ID: ' + rsvp.event_id}</td>
                     <td>${rsvp.family_name}</td>
                     <td><span class="badge badge-${rsvp.attendance.toLowerCase()}">${rsvp.attendance}</span></td>
                     <td>${rsvp.members_count || 'N/A'}</td>
