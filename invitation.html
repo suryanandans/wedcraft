@@ -73,6 +73,38 @@
                 padding: 60px 20px !important;
             }
         }
+
+        /* Enhanced RSVP Form Styles */
+        .attendance-option:hover {
+            border-color: #667eea !important;
+            background: rgba(102, 126, 234, 0.05) !important;
+        }
+
+        .food-option:hover {
+            border-color: #667eea !important;
+            background: rgba(102, 126, 234, 0.05) !important;
+        }
+
+        .family-member-card:hover {
+            border-color: #667eea !important;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        @media (max-width: 768px) {
+            .attendance-option {
+                font-size: 14px !important;
+                padding: 12px !important;
+            }
+            
+            .food-option {
+                font-size: 12px !important;
+                padding: 8px !important;
+            }
+            
+            .family-member-card > div:first-child {
+                grid-template-columns: 1fr !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -230,9 +262,9 @@
             </div>
         </div>
 
-        <!-- RSVP Form Section -->
+        <!-- Enhanced RSVP Form Section -->
         <div class="fade-in" style="padding: 80px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-            <div style="max-width: 600px; margin: 0 auto;">
+            <div style="max-width: 800px; margin: 0 auto;">
                 <div style="background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
                     <h2 style="text-align: center; font-size: 2.2rem; margin-bottom: 30px; color: #333;">RSVP to Our Wedding</h2>
                     <p style="text-align: center; color: #666; margin-bottom: 40px; font-size: 1.1rem;">
@@ -247,41 +279,43 @@
                             </select>
                         </div>
                         
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Family Name *</label>
-                                <input type="text" id="rsvpFamilyName" required style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 16px; transition: border-color 0.3s;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Family Name *</label>
+                            <input type="text" id="rsvpFamilyName" required style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 16px; transition: border-color 0.3s;">
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Will you be attending? *</label>
+                            <div style="display: flex; gap: 15px; margin-top: 10px;">
+                                <div onclick="selectAttendance('Yes')" style="flex: 1; padding: 15px; border: 2px solid #e1e5e9; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.3s ease; background: white;" class="attendance-option">
+                                    <input type="radio" name="attendance" value="Yes" id="attendYes" style="display: none;">
+                                    <div>✅ Yes, we'll be there!</div>
+                                </div>
+                                <div onclick="selectAttendance('No')" style="flex: 1; padding: 15px; border: 2px solid #e1e5e9; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.3s ease; background: white;" class="attendance-option">
+                                    <input type="radio" name="attendance" value="No" id="attendNo" style="display: none;">
+                                    <div>❌ Sorry, can't make it</div>
+                                </div>
+                                <div onclick="selectAttendance('Maybe')" style="flex: 1; padding: 15px; border: 2px solid #e1e5e9; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.3s ease; background: white;" class="attendance-option">
+                                    <input type="radio" name="attendance" value="Maybe" id="attendMaybe" style="display: none;">
+                                    <div>🤔 Not sure yet</div>
+                                </div>
                             </div>
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Number of Members *</label>
-                                <input type="number" id="rsvpMembersCount" min="1" max="20" required style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 16px; transition: border-color 0.3s;">
+                        </div>
+                        
+                        <!-- Family Members Section -->
+                        <div id="familyMembersSection" style="display: none; margin-top: 30px; padding: 25px; background: rgba(102, 126, 234, 0.05); border-radius: 15px; border: 2px solid rgba(102, 126, 234, 0.1);">
+                            <div style="font-size: 20px; font-weight: 600; color: #333; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                                👨‍👩‍👧‍👦 Family Members Details
                             </div>
-                        </div>
-                        
-                        <div>
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Attendance *</label>
-                            <select id="rsvpAttendance" required style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 16px; transition: border-color 0.3s;">
-                                <option value="">Please select...</option>
-                                <option value="Yes">Yes, we'll be there! 🎉</option>
-                                <option value="No">Sorry, can't make it 😔</option>
-                                <option value="Maybe">Not sure yet 🤔</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Food Preference</label>
-                            <select id="rsvpFoodPreference" style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 16px; transition: border-color 0.3s;">
-                                <option value="">Please select...</option>
-                                <option value="Vegetarian">Vegetarian 🥗</option>
-                                <option value="Non-Vegetarian">Non-Vegetarian 🍖</option>
-                                <option value="Vegan">Vegan 🌱</option>
-                                <option value="No Preference">No Preference</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Special Message</label>
-                            <textarea id="rsvpMessage" rows="4" placeholder="Share your wishes or any special requirements..." style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 16px; resize: vertical; transition: border-color 0.3s;"></textarea>
+                            
+                            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
+                                <label style="font-weight: 600; color: #333;">Number of family members:</label>
+                                <input type="number" id="memberCount" min="1" max="20" value="1" onchange="generateMemberFields()" style="width: 80px; text-align: center; padding: 8px; border: 2px solid #e1e5e9; border-radius: 8px;">
+                            </div>
+
+                            <div id="familyMembersContainer">
+                                <!-- Family member cards will be generated here -->
+                            </div>
                         </div>
                         
                         <button type="submit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer; transition: transform 0.3s, box-shadow 0.3s; margin-top: 20px;">
@@ -514,45 +548,154 @@
             });
         }
 
-        // Handle RSVP form submission
+        // Global variables for enhanced RSVP
+        let selectedAttendance = '';
+
+        // Select attendance option
+        function selectAttendance(attendance) {
+            selectedAttendance = attendance;
+            
+            // Update UI
+            document.querySelectorAll('.attendance-option').forEach(option => {
+                option.style.borderColor = '#e1e5e9';
+                option.style.background = 'white';
+                option.style.color = '#333';
+            });
+            
+            event.target.closest('.attendance-option').style.borderColor = '#667eea';
+            event.target.closest('.attendance-option').style.background = 'rgba(102, 126, 234, 0.1)';
+            event.target.closest('.attendance-option').style.color = '#667eea';
+            
+            // Set radio button
+            document.getElementById(`attend${attendance}`).checked = true;
+            
+            // Show/hide family members section
+            const familySection = document.getElementById('familyMembersSection');
+            if (attendance === 'Yes') {
+                familySection.style.display = 'block';
+                generateMemberFields();
+            } else {
+                familySection.style.display = 'none';
+            }
+        }
+
+        // Generate family member input fields
+        function generateMemberFields() {
+            const memberCount = parseInt(document.getElementById('memberCount').value) || 1;
+            const container = document.getElementById('familyMembersContainer');
+            
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= memberCount; i++) {
+                const memberCard = document.createElement('div');
+                memberCard.style.cssText = 'background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 2px solid #e1e5e9; transition: all 0.3s ease;';
+                memberCard.innerHTML = `
+                    <div style="font-weight: 600; color: #333; margin-bottom: 15px; font-size: 16px;">Family Member ${i}</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-items: end;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Name</label>
+                            <input type="text" name="memberName${i}" placeholder="Enter name" required style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 16px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Food Preference</label>
+                            <div style="display: flex; gap: 10px;">
+                                <div onclick="selectFoodPreference(${i}, 'Vegetarian')" style="flex: 1; padding: 10px; border: 2px solid #e1e5e9; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s ease; background: white; font-size: 14px;" class="food-option">
+                                    <input type="radio" name="foodPref${i}" value="Vegetarian" id="veg${i}" style="display: none;">
+                                    🥗 Vegetarian
+                                </div>
+                                <div onclick="selectFoodPreference(${i}, 'Non-Vegetarian')" style="flex: 1; padding: 10px; border: 2px solid #e1e5e9; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s ease; background: white; font-size: 14px;" class="food-option">
+                                    <input type="radio" name="foodPref${i}" value="Non-Vegetarian" id="nonveg${i}" style="display: none;">
+                                    🍖 Non-Vegetarian
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+                                <input type="checkbox" id="isChild${i}" name="isChild${i}" style="width: 18px; height: 18px; accent-color: #667eea;">
+                                <label for="isChild${i}" style="font-size: 14px; color: #666;">This person is a child (under 12)</label>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(memberCard);
+            }
+        }
+
+        // Select food preference
+        function selectFoodPreference(memberIndex, preference) {
+            const container = event.target.closest('.food-option').parentNode;
+            container.querySelectorAll('.food-option').forEach(option => {
+                option.style.borderColor = '#e1e5e9';
+                option.style.background = 'white';
+                option.style.color = '#333';
+            });
+            
+            event.target.closest('.food-option').style.borderColor = '#667eea';
+            event.target.closest('.food-option').style.background = 'rgba(102, 126, 234, 0.1)';
+            event.target.closest('.food-option').style.color = '#667eea';
+            
+            document.getElementById(`${preference === 'Vegetarian' ? 'veg' : 'nonveg'}${memberIndex}`).checked = true;
+        }
+
+        // Handle enhanced RSVP form submission
         async function handleRSVP(event) {
             event.preventDefault();
             
             const submitBtn = event.target.querySelector('button[type="submit"]');
             const originalBtnText = submitBtn.innerHTML;
             
-            // Show loading state - user stays on same page
+            // Show loading state
             submitBtn.innerHTML = '⏳ Sending RSVP...';
             submitBtn.disabled = true;
             submitBtn.style.opacity = '0.7';
             
             const eventId = document.getElementById('rsvpEventId').value;
             const familyName = document.getElementById('rsvpFamilyName').value.trim();
-            const membersCount = document.getElementById('rsvpMembersCount').value;
-            const attendance = document.getElementById('rsvpAttendance').value;
-            const foodPreference = document.getElementById('rsvpFoodPreference').value;
-            const message = document.getElementById('rsvpMessage').value.trim();
             
             // Validation
-            if (!eventId || !familyName || !membersCount || !attendance) {
+            if (!eventId || !familyName || !selectedAttendance) {
                 showAlert('Please fill in all required fields.', 'error');
-                // Reset button state
-                submitBtn.innerHTML = originalBtnText;
-                submitBtn.disabled = false;
-                submitBtn.style.opacity = '1';
+                resetButtonState(submitBtn, originalBtnText);
                 return;
+            }
+            
+            let familyMembers = [];
+            
+            if (selectedAttendance === 'Yes') {
+                const memberCount = parseInt(document.getElementById('memberCount').value) || 1;
+                
+                for (let i = 1; i <= memberCount; i++) {
+                    const memberName = document.querySelector(`input[name="memberName${i}"]`).value;
+                    const foodPref = document.querySelector(`input[name="foodPref${i}"]:checked`);
+                    const isChild = document.getElementById(`isChild${i}`).checked;
+                    
+                    if (!memberName.trim()) {
+                        showAlert(`Please enter name for family member ${i}.`, 'error');
+                        resetButtonState(submitBtn, originalBtnText);
+                        return;
+                    }
+                    
+                    if (!foodPref) {
+                        showAlert(`Please select food preference for ${memberName}.`, 'error');
+                        resetButtonState(submitBtn, originalBtnText);
+                        return;
+                    }
+                    
+                    familyMembers.push({
+                        member_name: memberName.trim(),
+                        food_preference: foodPref.value,
+                        is_child: isChild
+                    });
+                }
             }
             
             const rsvpData = {
                 event_id: parseInt(eventId),
                 family_name: familyName,
-                members_count: parseInt(membersCount),
-                attendance: attendance,
-                food_preference: foodPreference || null
+                attendance: selectedAttendance,
+                family_members: familyMembers.length > 0 ? familyMembers : null
             };
             
             try {
-                const response = await fetch('/api/rsvp/submit', {
+                const response = await fetch('/api/rsvp/enhanced-submit', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -560,10 +703,19 @@
                     body: JSON.stringify(rsvpData)
                 });
                 
-                if (response.ok) {
-                    // Success - user stays on same page with celebration
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // Success
                     showAlert('🎉 Thank you! Your RSVP has been submitted successfully. We can\'t wait to celebrate with you!', 'success');
                     document.getElementById('invitationRSVPForm').reset();
+                    selectedAttendance = '';
+                    document.getElementById('familyMembersSection').style.display = 'none';
+                    document.querySelectorAll('.attendance-option').forEach(option => {
+                        option.style.borderColor = '#e1e5e9';
+                        option.style.background = 'white';
+                        option.style.color = '#333';
+                    });
                     
                     // Show success state on button
                     submitBtn.innerHTML = '✅ RSVP Sent Successfully!';
@@ -578,21 +730,21 @@
                     }, 4000);
                     
                 } else {
-                    const errorData = await response.json();
-                    showAlert(errorData.detail || 'Failed to submit RSVP. Please try again.', 'error');
-                    // Reset button state
-                    submitBtn.innerHTML = originalBtnText;
-                    submitBtn.disabled = false;
-                    submitBtn.style.opacity = '1';
+                    showAlert(data.detail || 'Failed to submit RSVP. Please try again.', 'error');
+                    resetButtonState(submitBtn, originalBtnText);
                 }
             } catch (error) {
                 console.error('Error submitting RSVP:', error);
                 showAlert('Network error. Please check your connection and try again.', 'error');
-                // Reset button state
-                submitBtn.innerHTML = originalBtnText;
-                submitBtn.disabled = false;
-                submitBtn.style.opacity = '1';
+                resetButtonState(submitBtn, originalBtnText);
             }
+        }
+
+        // Helper function to reset button state
+        function resetButtonState(submitBtn, originalBtnText) {
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
         }
 
         // Show alert

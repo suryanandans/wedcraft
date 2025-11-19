@@ -1548,7 +1548,7 @@
                 
                 // Debug: Check all RSVP responses (without user filter)
                 console.log('Checking ALL RSVP responses for debugging...');
-                const allRsvpResponse = await fetch('/api/admin/rsvp-responses');
+                const allRsvpResponse = await fetch('/api/admin/enhanced-rsvp-responses');
                 if (allRsvpResponse.ok) {
                     const allRsvpData = await allRsvpResponse.json();
                     const totalRSVPs = allRsvpData.responses ? allRsvpData.responses.length : 0;
@@ -1574,7 +1574,7 @@
                     
                     // Now get filtered RSVP responses
                     console.log('Getting filtered RSVP responses...');
-                    const rsvpResponse = await fetch(`/api/admin/rsvp-responses?user_id=${userId}`);
+                    const rsvpResponse = await fetch(`/api/admin/enhanced-rsvp-responses?user_id=${userId}`);
                     let actualRSVPCount = 0;
                     
                     if (rsvpResponse.ok) {
@@ -1699,7 +1699,7 @@
                 }
 
                 // Load RSVP responses count
-                const rsvpResponse = await fetch('/api/admin/rsvp-responses');
+                const rsvpResponse = await fetch('/api/admin/enhanced-rsvp-responses');
                 if (rsvpResponse.ok) {
                     const rsvpData = await rsvpResponse.json();
                     // For individual stats, we'll use events count as active forms count
@@ -2127,6 +2127,32 @@
             showEventSelection();
         }
 
+        // Helper function to format food preferences from family members
+        function formatFoodPreferences(rsvp) {
+            if (rsvp.attendance !== 'Yes') {
+                return 'N/A';
+            }
+            
+            if (rsvp.family_members && rsvp.family_members.length > 0) {
+                const vegCount = rsvp.family_members.filter(m => m.food_preference === 'Vegetarian').length;
+                const nonVegCount = rsvp.family_members.filter(m => m.food_preference === 'Non-Vegetarian').length;
+                
+                if (vegCount > 0 && nonVegCount > 0) {
+                    return `Mixed (${vegCount}V, ${nonVegCount}NV)`;
+                } else if (vegCount > 0) {
+                    return `Vegetarian (${vegCount})`;
+                } else if (nonVegCount > 0) {
+                    return `Non-Vegetarian (${nonVegCount})`;
+                } else {
+                    return 'Not specified';
+                }
+            } else if (rsvp.food_preference_summary) {
+                return rsvp.food_preference_summary;
+            } else {
+                return 'Not specified';
+            }
+        }
+
         // Render RSVP table (individual responses)
         function renderRSVPTable() {
             const tbody = document.getElementById('rsvpResponsesTableBody');
@@ -2148,7 +2174,7 @@
                     <td>${rsvp.family_name}</td>
                     <td><span class="badge badge-${rsvp.attendance ? rsvp.attendance.toLowerCase() : 'unknown'}">${rsvp.attendance || 'N/A'}</span></td>
                     <td>${rsvp.members_count || 'N/A'}</td>
-                    <td>${rsvp.food_preference || 'N/A'}</td>
+                    <td>${formatFoodPreferences(rsvp)}</td>
                     <td>${new Date(rsvp.created_at).toLocaleDateString()}</td>
                 `;
                 tbody.appendChild(row);
@@ -2269,7 +2295,7 @@
         async function selectEvent(eventId, eventName) {
             try {
                 // Load RSVP responses for the selected event
-                let rsvpUrl = '/api/admin/rsvp-responses';
+                let rsvpUrl = '/api/admin/enhanced-rsvp-responses';
                 if (!isAdmin()) {
                     const userId = getCurrentUserId();
                     rsvpUrl += `?user_id=${userId}`;
@@ -2512,12 +2538,30 @@
             // ML prediction: 70% of "maybe" responses typically become "yes"
             const predictedAttendees = confirmedAttendees + Math.round(maybeAttendees * 0.7);
             
-            // ML prediction: Food preferences based on historical data
-            const vegResponses = rsvpResponses.filter(r => r.food_preference && r.food_preference.toLowerCase().includes('veg') && !r.food_preference.toLowerCase().includes('non'));
-            const nonVegResponses = rsvpResponses.filter(r => r.food_preference && r.food_preference.toLowerCase().includes('non'));
+            // ML prediction: Food preferences based on historical data from individual family members
+            let historicalVegCount = 0;
+            let historicalNonVegCount = 0;
             
-            // Predict food preferences for attendees (dummy model)
-            const predictedVegCount = Math.round(predictedAttendees * 0.6); // 60% vegetarian prediction
+            rsvpResponses.forEach(r => {
+                if (r.attendance === 'Yes' && r.family_members && r.family_members.length > 0) {
+                    r.family_members.forEach(member => {
+                        if (member.food_preference === 'Vegetarian') {
+                            historicalVegCount++;
+                        } else if (member.food_preference === 'Non-Vegetarian') {
+                            historicalNonVegCount++;
+                        }
+                    });
+                }
+            });
+            
+            // Calculate prediction based on historical data or fallback to default ratio
+            const totalHistorical = historicalVegCount + historicalNonVegCount;
+            let vegRatio = 0.6; // Default 60% vegetarian
+            if (totalHistorical > 0) {
+                vegRatio = historicalVegCount / totalHistorical;
+            }
+            
+            const predictedVegCount = Math.round(predictedAttendees * vegRatio);
             const predictedNonVegCount = predictedAttendees - predictedVegCount;
             
             // Update summary statistics with corrected count
@@ -2545,7 +2589,7 @@
                     <td>${rsvp.family_name}</td>
                     <td><span class="badge badge-${rsvp.attendance ? rsvp.attendance.toLowerCase() : 'unknown'}">${rsvp.attendance || 'N/A'}</span></td>
                     <td>${rsvp.members_count || 'N/A'}</td>
-                    <td>${rsvp.food_preference || 'N/A'}</td>
+                    <td>${formatFoodPreferences(rsvp)}</td>
                     <td>${new Date(rsvp.created_at).toLocaleDateString()}</td>
                 `;
                 tbody.appendChild(row);
@@ -2631,17 +2675,30 @@
             const maybeAttendees = maybeResponses.reduce((sum, r) => sum + (r.members_count || 0), 0);
             const predictedAttendees = confirmedAttendees + Math.round(maybeAttendees * 0.7);
             
-            // Count actual food preferences from the data
-            const vegCount = rsvpResponses.filter(r =>
-                r.food_preference &&
-                r.food_preference.toLowerCase().includes('vegetarian') &&
-                !r.food_preference.toLowerCase().includes('non')
-            ).reduce((sum, r) => sum + (r.members_count || 0), 0);
+            // Count actual food preferences from individual family member data
+            let vegCount = 0;
+            let nonVegCount = 0;
             
-            const nonVegCount = rsvpResponses.filter(r =>
-                r.food_preference &&
-                r.food_preference.toLowerCase().includes('non')
-            ).reduce((sum, r) => sum + (r.members_count || 0), 0);
+            rsvpResponses.forEach(r => {
+                if (r.attendance === 'Yes' && r.family_members && r.family_members.length > 0) {
+                    // Count individual family members' food preferences
+                    r.family_members.forEach(member => {
+                        if (member.food_preference === 'Vegetarian') {
+                            vegCount++;
+                        } else if (member.food_preference === 'Non-Vegetarian') {
+                            nonVegCount++;
+                        }
+                    });
+                } else if (r.attendance === 'Yes' && r.food_preference_summary) {
+                    // Fallback to summary data if individual data not available
+                    if (r.food_preference_summary.toLowerCase().includes('vegetarian') &&
+                        !r.food_preference_summary.toLowerCase().includes('non')) {
+                        vegCount += (r.members_count || 0);
+                    } else if (r.food_preference_summary.toLowerCase().includes('non')) {
+                        nonVegCount += (r.members_count || 0);
+                    }
+                }
+            });
             
             // Update summary statistics with corrected count
             document.getElementById('totalFamiliesRegistered').textContent = totalFamilies;
@@ -2720,7 +2777,7 @@
         async function downloadRSVPData(format) {
             try {
                 const userId = getCurrentUserId();
-                const response = await fetch(`/api/admin/rsvp-responses?user_id=${userId}`);
+                const response = await fetch(`/api/admin/enhanced-rsvp-responses?user_id=${userId}`);
                 
                 if (!response.ok) {
                     showAlert('rsvpAlert', 'Failed to fetch RSVP data for download', 'error');
@@ -2759,7 +2816,7 @@
                     `"${rsvp.family_name}"`,
                     rsvp.attendance,
                     rsvp.members_count || 0,
-                    `"${rsvp.food_preference || 'N/A'}"`,
+                    `"${formatFoodPreferences(rsvp)}"`,
                     `"${rsvp.message || 'N/A'}"`,
                     new Date(rsvp.created_at).toLocaleDateString()
                 ].join(','))
@@ -2844,7 +2901,7 @@
                                     <td>${rsvp.family_name}</td>
                                     <td><span class="badge-${rsvp.attendance.toLowerCase()}">${rsvp.attendance}</span></td>
                                     <td>${rsvp.members_count || 'N/A'}</td>
-                                    <td>${rsvp.food_preference || 'N/A'}</td>
+                                    <td>${formatFoodPreferences(rsvp)}</td>
                                     <td>${new Date(rsvp.created_at).toLocaleDateString()}</td>
                                 </tr>
                             `).join('')}
@@ -2939,7 +2996,7 @@
         // Load detailed RSVP responses (individual family responses)
         async function loadDetailedRSVPResponses() {
             try {
-                let rsvpUrl = '/api/admin/rsvp-responses';
+                let rsvpUrl = '/api/admin/enhanced-rsvp-responses';
                 if (!isAdmin()) {
                     const userId = getCurrentUserId();
                     rsvpUrl += `?user_id=${userId}`;
@@ -2977,7 +3034,7 @@
                     <td>${rsvp.family_name}</td>
                     <td><span class="badge badge-${rsvp.attendance.toLowerCase()}">${rsvp.attendance}</span></td>
                     <td>${rsvp.members_count || 'N/A'}</td>
-                    <td>${rsvp.food_preference || 'N/A'}</td>
+                    <td>${formatFoodPreferences(rsvp)}</td>
                     <td>${new Date(rsvp.created_at).toLocaleDateString()}</td>
                 `;
                 tbody.appendChild(row);

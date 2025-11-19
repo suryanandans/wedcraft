@@ -106,6 +106,17 @@ class RSVPResponse(Base):
     food_preference = Column(String(50), nullable=True)  # 'veg', 'non-veg'
     created_at = Column(DateTime, default=datetime.utcnow)
 
+# New detailed family member model
+class FamilyMember(Base):
+    __tablename__ = "family_members"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    rsvp_response_id = Column(Integer, nullable=False)  # Foreign key to RSVPResponse
+    member_name = Column(String(255), nullable=False)
+    food_preference = Column(String(20), nullable=False)  # 'Vegetarian', 'Non-Vegetarian'
+    is_child = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 # Processed Analytics table
 class ProcessedAnalytics(Base):
     __tablename__ = "processed_analytics"
@@ -180,6 +191,18 @@ class RSVPCreate(BaseModel):
     attendance: str
     members_count: Optional[int] = None
     food_preference: Optional[str] = None
+
+# Enhanced RSVP models for individual family member preferences
+class FamilyMemberData(BaseModel):
+    member_name: str
+    food_preference: str  # 'Vegetarian' or 'Non-Vegetarian'
+    is_child: bool = False
+
+class EnhancedRSVPSubmission(BaseModel):
+    event_id: int
+    family_name: str
+    attendance: str  # Must be 'Yes', 'No', or 'Maybe'
+    family_members: Optional[List[FamilyMemberData]] = None  # Required if attendance is 'Yes'
 
 class Token(BaseModel):
     access_token: str
@@ -284,6 +307,10 @@ async def rsvp_sample_page():
 @app.get("/invitation.html")
 async def invitation_page():
     return FileResponse(Path("invitation.html"), media_type="text/html")
+
+@app.get("/enhanced_rsvp_form.html")
+async def enhanced_rsvp_form_page():
+    return FileResponse(Path("enhanced_rsvp_form.html"), media_type="text/html")
 
 # Authentication endpoints
 @app.post("/api/login")
@@ -940,6 +967,129 @@ async def submit_standard_rsvp(rsvp: StandardRSVPSubmission, db: Session = Depen
         }
     }
 
+# Enhanced RSVP Form Submission Endpoint with Individual Member Details
+@app.post("/api/rsvp/enhanced-submit")
+async def submit_enhanced_rsvp(rsvp: EnhancedRSVPSubmission, db: Session = Depends(get_db)):
+    """
+    Enhanced RSVP submission endpoint that handles individual family member details
+    including food preferences and child status for each member.
+    """
+    
+    # Validate attendance value
+    valid_attendance = ['Yes', 'No', 'Maybe']
+    if rsvp.attendance not in valid_attendance:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid attendance value. Must be one of: {', '.join(valid_attendance)}"
+        )
+    
+    # Validate required fields for 'Yes' attendance
+    if rsvp.attendance == 'Yes':
+        if not rsvp.family_members or len(rsvp.family_members) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Family members details are required when attendance is 'Yes'"
+            )
+        
+        # Validate each family member
+        for member in rsvp.family_members:
+            if not member.member_name.strip():
+                raise HTTPException(
+                    status_code=400,
+                    detail="All family members must have a name"
+                )
+            
+            valid_food_prefs = ['Vegetarian', 'Non-Vegetarian']
+            if member.food_preference not in valid_food_prefs:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid food preference. Must be one of: {', '.join(valid_food_prefs)}"
+                )
+    
+    # Check if event exists
+    event = db.query(Event).filter(Event.id == rsvp.event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Check for duplicate RSVP from same family for same event
+    existing_rsvp = db.query(RSVPResponse).filter(
+        RSVPResponse.event_id == rsvp.event_id,
+        RSVPResponse.family_name == rsvp.family_name
+    ).first()
+    
+    if existing_rsvp:
+        raise HTTPException(
+            status_code=400,
+            detail="RSVP already submitted for this family and event"
+        )
+    
+    try:
+        # Create main RSVP response
+        members_count = len(rsvp.family_members) if rsvp.family_members else 0
+        
+        # Calculate overall food preference summary for backward compatibility
+        food_preference_summary = None
+        if rsvp.attendance == 'Yes' and rsvp.family_members:
+            veg_count = sum(1 for member in rsvp.family_members if member.food_preference == 'Vegetarian')
+            nonveg_count = len(rsvp.family_members) - veg_count
+            
+            if veg_count > 0 and nonveg_count > 0:
+                food_preference_summary = "Mixed"
+            elif veg_count > 0:
+                food_preference_summary = "Vegetarian"
+            else:
+                food_preference_summary = "Non-Vegetarian"
+        
+        db_rsvp = RSVPResponse(
+            event_id=rsvp.event_id,
+            family_name=rsvp.family_name.strip(),
+            attendance=rsvp.attendance,
+            members_count=members_count if rsvp.attendance == 'Yes' else None,
+            food_preference=food_preference_summary if rsvp.attendance == 'Yes' else None
+        )
+        
+        db.add(db_rsvp)
+        db.flush()  # Get the ID without committing
+        
+        # Create individual family member records
+        family_members_data = []
+        if rsvp.attendance == 'Yes' and rsvp.family_members:
+            for member in rsvp.family_members:
+                db_member = FamilyMember(
+                    rsvp_response_id=db_rsvp.id,
+                    member_name=member.member_name.strip(),
+                    food_preference=member.food_preference,
+                    is_child=member.is_child
+                )
+                db.add(db_member)
+                family_members_data.append({
+                    "member_name": db_member.member_name,
+                    "food_preference": db_member.food_preference,
+                    "is_child": db_member.is_child
+                })
+        
+        db.commit()
+        db.refresh(db_rsvp)
+        
+        return {
+            "success": True,
+            "message": "Enhanced RSVP submitted successfully",
+            "rsvp": {
+                "id": db_rsvp.id,
+                "event_id": db_rsvp.event_id,
+                "family_name": db_rsvp.family_name,
+                "attendance": db_rsvp.attendance,
+                "members_count": db_rsvp.members_count,
+                "food_preference_summary": db_rsvp.food_preference,
+                "family_members": family_members_data,
+                "submitted_at": db_rsvp.created_at.isoformat()
+            }
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to submit RSVP: {str(e)}")
+
 @app.get("/api/admin/rsvp-responses")
 async def get_rsvp_responses(user_id: Optional[int] = None, db: Session = Depends(get_db)):
     if user_id:
@@ -967,6 +1117,54 @@ async def get_rsvp_responses(user_id: Optional[int] = None, db: Session = Depend
             "members_count": response.members_count,
             "food_preference": response.food_preference,
             "message": None,  # RSVPResponse model doesn't have message field
+            "created_at": response.created_at.isoformat()
+        })
+    
+    return {
+        "success": True,
+        "responses": response_list
+    }
+
+# Enhanced RSVP responses with family member details
+@app.get("/api/admin/enhanced-rsvp-responses")
+async def get_enhanced_rsvp_responses(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+    """Get RSVP responses with detailed family member information"""
+    if user_id:
+        # Filter RSVP responses for specific user's events
+        responses = db.query(RSVPResponse).join(Event, RSVPResponse.event_id == Event.id).filter(Event.user_id == user_id).all()
+    else:
+        # Admin view - all responses
+        responses = db.query(RSVPResponse).all()
+    
+    # Build response list with event and family member information
+    response_list = []
+    for response in responses:
+        # Get event information for each response
+        event = db.query(Event).filter(Event.id == response.event_id).first()
+        event_name = None
+        if event:
+            event_name = f"{event.bride_name} & {event.groom_name}" if event.bride_name and event.groom_name else event.event_name
+        
+        # Get family members for this RSVP
+        family_members = db.query(FamilyMember).filter(FamilyMember.rsvp_response_id == response.id).all()
+        family_members_data = []
+        
+        for member in family_members:
+            family_members_data.append({
+                "member_name": member.member_name,
+                "food_preference": member.food_preference,
+                "is_child": member.is_child
+            })
+        
+        response_list.append({
+            "id": response.id,
+            "event_id": response.event_id,
+            "event_name": event_name,
+            "family_name": response.family_name,
+            "attendance": response.attendance,
+            "members_count": response.members_count,
+            "food_preference_summary": response.food_preference,
+            "family_members": family_members_data,
             "created_at": response.created_at.isoformat()
         })
     

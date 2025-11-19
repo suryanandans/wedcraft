@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced RSVP Form - WedCraft</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .attendance-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .attendance-option {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .attendance-option:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .attendance-option.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .attendance-option input[type="radio"] {
+            display: none;
+        }
+
+        .family-members-section {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 15px;
+            border: 2px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .family-members-section.show {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .member-count-input {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .member-count-input input {
+            width: 80px;
+            text-align: center;
+        }
+
+        .family-member-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 2px solid #e1e5e9;
+            transition: all 0.3s ease;
+        }
+
+        .family-member-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .member-header {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .member-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .food-preference-options {
+            display: flex;
+            gap: 10px;
+        }
+
+        .food-option {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            font-size: 14px;
+        }
+
+        .food-option:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .food-option.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .food-option input[type="radio"] {
+            display: none;
+        }
+
+        .child-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .child-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            border: 2px solid rgba(76, 175, 80, 0.2);
+        }
+
+        .alert.error {
+            background: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            border: 2px solid rgba(244, 67, 54, 0.2);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .attendance-options {
+                flex-direction: column;
+            }
+
+            .member-fields {
+                grid-template-columns: 1fr;
+            }
+
+            .food-preference-options {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Wedding RSVP</h1>
+            <p>Please let us know if you'll be joining our special day!</p>
+        </div>
+
+        <div class="alert" id="alertMessage"></div>
+        <div class="loading" id="loadingMessage">
+            <p>Submitting your RSVP...</p>
+        </div>
+
+        <form id="rsvpForm">
+            <!-- Event Selection -->
+            <div class="form-group">
+                <label class="form-label">Select Event</label>
+                <select class="form-select" id="eventSelect" required>
+                    <option value="">Choose an event...</option>
+                </select>
+            </div>
+
+            <!-- Family Name -->
+            <div class="form-group">
+                <label class="form-label">Family Name</label>
+                <input type="text" class="form-input" id="familyName" placeholder="Enter your family name" required>
+            </div>
+
+            <!-- Attendance -->
+            <div class="form-group">
+                <label class="form-label">Will you be attending?</label>
+                <div class="attendance-options">
+                    <div class="attendance-option" onclick="selectAttendance('Yes')">
+                        <input type="radio" name="attendance" value="Yes" id="attendYes">
+                        <div>✅ Yes, we'll be there!</div>
+                    </div>
+                    <div class="attendance-option" onclick="selectAttendance('No')">
+                        <input type="radio" name="attendance" value="No" id="attendNo">
+                        <div>❌ Sorry, can't make it</div>
+                    </div>
+                    <div class="attendance-option" onclick="selectAttendance('Maybe')">
+                        <input type="radio" name="attendance" value="Maybe" id="attendMaybe">
+                        <div>🤔 Not sure yet</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Family Members Section -->
+            <div class="family-members-section" id="familyMembersSection">
+                <div class="section-title">
+                    👨‍👩‍👧‍👦 Family Members Details
+                </div>
+                
+                <div class="member-count-input">
+                    <label class="form-label">Number of family members:</label>
+                    <input type="number" class="form-input" id="memberCount" min="1" max="20" value="1" onchange="generateMemberFields()">
+                </div>
+
+                <div id="familyMembersContainer">
+                    <!-- Family member cards will be generated here -->
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                Submit RSVP
+            </button>
+        </form>
+    </div>
+
+    <script>
+        let selectedAttendance = '';
+        let events = [];
+
+        // Load events on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEvents();
+        });
+
+        // Load available events
+        async function loadEvents() {
+            try {
+                const response = await fetch('/api/admin/events');
+                const data = await response.json();
+                
+                if (data.success) {
+                    events = data.events;
+                    populateEventSelect();
+                }
+            } catch (error) {
+                console.error('Error loading events:', error);
+                showAlert('Error loading events. Please refresh the page.', 'error');
+            }
+        }
+
+        // Populate event select dropdown
+        function populateEventSelect() {
+            const eventSelect = document.getElementById('eventSelect');
+            eventSelect.innerHTML = '<option value="">Choose an event...</option>';
+            
+            events.forEach(event => {
+                const option = document.createElement('option');
+                option.value = event.id;
+                
+                let eventName = 'Unnamed Event';
+                if (event.event_name && event.event_name !== 'None') {
+                    eventName = event.event_name;
+                } else if (event.bride_name && event.groom_name && 
+                          event.bride_name !== 'None' && event.groom_name !== 'None') {
+                    eventName = `${event.bride_name} & ${event.groom_name}`;
+                }
+                
+                option.textContent = `${eventName} - ${event.wedding_date}`;
+                eventSelect.appendChild(option);
+            });
+        }
+
+        // Select attendance option
+        function selectAttendance(attendance) {
+            selectedAttendance = attendance;
+            
+            // Update UI
+            document.querySelectorAll('.attendance-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            event.target.closest('.attendance-option').classList.add('selected');
+            
+            // Set radio button
+            document.getElementById(`attend${attendance}`).checked = true;
+            
+            // Show/hide family members section
+            const familySection = document.getElementById('familyMembersSection');
+            if (attendance === 'Yes') {
+                familySection.classList.add('show');
+                generateMemberFields();
+            } else {
+                familySection.classList.remove('show');
+            }
+        }
+
+        // Generate family member input fields
+        function generateMemberFields() {
+            const memberCount = parseInt(document.getElementById('memberCount').value) || 1;
+            const container = document.getElementById('familyMembersContainer');
+            
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= memberCount; i++) {
+                const memberCard = document.createElement('div');
+                memberCard.className = 'family-member-card';
+                memberCard.innerHTML = `
+                    <div class="member-header">Family Member ${i}</div>
+                    <div class="member-fields">
+                        <div class="form-group">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-input" name="memberName${i}" placeholder="Enter name" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Food Preference</label>
+                            <div class="food-preference-options">
+                                <div class="food-option" onclick="selectFoodPreference(${i}, 'Vegetarian')">
+                                    <input type="radio" name="foodPref${i}" value="Vegetarian" id="veg${i}">
+                                    🥗 Vegetarian
+                                </div>
+                                <div class="food-option" onclick="selectFoodPreference(${i}, 'Non-Vegetarian')">
+                                    <input type="radio" name="foodPref${i}" value="Non-Vegetarian" id="nonveg${i}">
+                                    🍖 Non-Vegetarian
+                                </div>
+                            </div>
+                            <div class="child-checkbox">
+                                <input type="checkbox" id="isChild${i}" name="isChild${i}">
+                                <label for="isChild${i}">This person is a child (under 12)</label>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(memberCard);
+            }
+        }
+
+        // Select food preference
+        function selectFoodPreference(memberIndex, preference) {
+            const container = event.target.closest('.food-preference-options');
+            container.querySelectorAll('.food-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            event.target.closest('.food-option').classList.add('selected');
+            document.getElementById(`${preference === 'Vegetarian' ? 'veg' : 'nonveg'}${memberIndex}`).checked = true;
+        }
+
+        // Handle form submission
+        document.getElementById('rsvpForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const eventId = document.getElementById('eventSelect').value;
+            const familyName = document.getElementById('familyName').value;
+            
+            if (!eventId) {
+                showAlert('Please select an event.', 'error');
+                return;
+            }
+            
+            if (!selectedAttendance) {
+                showAlert('Please select your attendance status.', 'error');
+                return;
+            }
+            
+            let familyMembers = [];
+            
+            if (selectedAttendance === 'Yes') {
+                const memberCount = parseInt(document.getElementById('memberCount').value) || 1;
+                
+                for (let i = 1; i <= memberCount; i++) {
+                    const memberName = document.querySelector(`input[name="memberName${i}"]`).value;
+                    const foodPref = document.querySelector(`input[name="foodPref${i}"]:checked`);
+                    const isChild = document.getElementById(`isChild${i}`).checked;
+                    
+                    if (!memberName.trim()) {
+                        showAlert(`Please enter name for family member ${i}.`, 'error');
+                        return;
+                    }
+                    
+                    if (!foodPref) {
+                        showAlert(`Please select food preference for ${memberName}.`, 'error');
+                        return;
+                    }
+                    
+                    familyMembers.push({
+                        member_name: memberName.trim(),
+                        food_preference: foodPref.value,
+                        is_child: isChild
+                    });
+                }
+            }
+            
+            // Show loading
+            document.getElementById('loadingMessage').classList.add('show');
+            document.getElementById('submitBtn').disabled = true;
+            
+            try {
+                const response = await fetch('/api/rsvp/enhanced-submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        event_id: parseInt(eventId),
+                        family_name: familyName,
+                        attendance: selectedAttendance,
+                        family_members: familyMembers.length > 0 ? familyMembers : null
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showAlert('RSVP submitted successfully! Thank you for your response.', 'success');
+                    document.getElementById('rsvpForm').reset();
+                    selectedAttendance = '';
+                    document.getElementById('familyMembersSection').classList.remove('show');
+                    document.querySelectorAll('.attendance-option').forEach(option => {
+                        option.classList.remove('selected');
+                    });
+                } else {
+                    showAlert(data.detail || 'Failed to submit RSVP. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Error submitting RSVP:', error);
+                showAlert('Error submitting RSVP. Please try again.', 'error');
+            } finally {
+                // Hide loading
+                document.getElementById('loadingMessage').classList.remove('show');
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+
+        // Show alert message
+        function showAlert(message, type) {
+            const alert = document.getElementById('alertMessage');
+            alert.textContent = message;
+            alert.className = `alert ${type}`;
+            alert.style.display = 'block';
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
