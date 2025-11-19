@@ -275,6 +275,10 @@ async def dashboard_page():
 async def rsvp_sample_page():
     return FileResponse(Path("rsvp_form_sample.html"), media_type="text/html")
 
+@app.get("/invitation.html")
+async def invitation_page():
+    return FileResponse(Path("invitation.html"), media_type="text/html")
+
 # Authentication endpoints
 @app.post("/api/user/login")
 async def login_user(user_login: UserLogin, db: Session = Depends(get_db)):

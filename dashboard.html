@@ -639,6 +639,10 @@
                 <i class="fas fa-calendar-alt"></i>
                 Events
             </a>
+            <a href="#" class="nav-item" onclick="showSection('invitation')">
+                <i class="fas fa-heart"></i>
+                Invitation
+            </a>
             <a href="#" class="nav-item" onclick="showSection('rsvp-responses')">
                 <i class="fas fa-envelope-open-text"></i>
                 RSVP Responses
@@ -833,9 +837,64 @@
                 </table>
             </div>
         </section>
+<!-- Invitation Section -->
+        <section class="content-section" id="invitation">
+            <!-- Event Selection View -->
+            <div id="invitationEventSelectionView">
+                <div class="section-header">
+                    <h1 class="section-title">
+                        <i class="fas fa-heart"></i>
+                        Select Event for Invitation
+                    </h1>
+                </div>
+                
+                <div class="alert" id="invitationAlert"></div>
+                
+                <div style="padding: 40px 20px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #f093fb, #f5576c); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 24px;">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <h3 style="margin: 0; color: #333; font-size: 20px;">Choose an Event</h3>
+                        <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;">Select an event to view and customize its invitation</p>
+                    </div>
+                    
+                    <div id="invitationEventCardsContainer" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1000px; margin: 0 auto;">
+                        <!-- Event selection options will be loaded here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Specific Event Invitation View -->
+            <div id="specificEventInvitationView" style="display: none;">
+                <div class="section-header">
+                    <h1 class="section-title">
+                        <i class="fas fa-heart"></i>
+                        <span id="selectedInvitationEventTitle">Wedding Invitation</span>
+                    </h1>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="backToInvitationEventSelection()">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Events
+                        </button>
+                        <button class="btn btn-secondary" onclick="previewInvitation()">
+                            <i class="fas fa-eye"></i>
+                            Preview Invitation
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Dynamic Invitation Content will be loaded here -->
+                <div id="dynamicInvitationContent">
+                    <!-- This will be populated with the selected event's invitation -->
+                </div>
+            </div>
+        </section>
 
         <!-- RSVP Responses Section -->
         <section class="content-section" id="rsvp-responses">
+            <div style="min-height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 0; margin: 0;">
+            <!-- Event Selection View -->
             <!-- Event Selection View -->
             <div id="eventSelectionView">
                 <div class="section-header">
@@ -1200,6 +1259,9 @@
                     break;
                 case 'events':
                     loadEvents();
+                    break;
+                case 'invitation':
+                    loadInvitationData();
                     break;
                 case 'rsvp-forms':
                     loadRSVPResponses();
@@ -1799,8 +1861,153 @@
                     }
                 }
             } catch (error) {
-                console.error('Error loading RSVP analytics from count.py:', error);
-                // Fallback to basic calculations will be handled by renderUserRSVPTable
+                console.error('Error loading RSVP analytics:', error);
+            }
+        }
+
+        // Load invitation data and setup form
+        function loadInvitationData() {
+            console.log('Loading invitation data...');
+            
+            // Show event selection view first
+            const eventSelectionView = document.getElementById('invitationEventSelectionView');
+            const specificEventView = document.getElementById('specificEventInvitationView');
+            
+            console.log('Event selection view:', eventSelectionView);
+            console.log('Specific event view:', specificEventView);
+            
+            if (eventSelectionView) {
+                eventSelectionView.style.display = 'block';
+            }
+            if (specificEventView) {
+                specificEventView.style.display = 'none';
+            }
+            
+            // Load invitation events
+            console.log('About to load invitation events...');
+            loadInvitationEvents();
+            
+            // Setup RSVP form submission (for any existing forms)
+            setupInvitationRSVPForm();
+            
+            // Add hover effects to form inputs
+            addFormInputEffects();
+        }
+
+        // Setup invitation RSVP form
+        function setupInvitationRSVPForm() {
+            const form = document.getElementById('invitationRSVPForm');
+            if (form) {
+                form.addEventListener('submit', handleInvitationRSVP);
+            }
+        }
+
+        // Add form input effects
+        function addFormInputEffects() {
+            const inputs = document.querySelectorAll('#invitationRSVPForm input, #invitationRSVPForm select, #invitationRSVPForm textarea');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.style.borderColor = '#667eea';
+                    this.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.style.borderColor = '#e1e5e9';
+                    this.style.boxShadow = 'none';
+                });
+            });
+
+            // Add button hover effect
+            const submitBtn = document.querySelector('#invitationRSVPForm button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.3)';
+                });
+                
+                submitBtn.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = 'none';
+                });
+            }
+        }
+
+        // Handle invitation RSVP form submission
+        async function handleInvitationRSVP(event) {
+            event.preventDefault();
+            
+            const familyName = document.getElementById('rsvpFamilyName').value.trim();
+            const membersCount = document.getElementById('rsvpMembersCount').value;
+            const attendance = document.getElementById('rsvpAttendance').value;
+            const foodPreference = document.getElementById('rsvpFoodPreference').value;
+            const message = document.getElementById('rsvpMessage').value.trim();
+            
+            // Validation
+            if (!familyName || !membersCount || !attendance) {
+                showInvitationAlert('Please fill in all required fields.', 'error');
+                return;
+            }
+            
+            // Get current user's event (assuming first event for demo)
+            const userId = getCurrentUserId();
+            let eventId = 1; // Default for demo
+            
+            try {
+                // Try to get user's first event
+                const eventsResponse = await fetch(`/api/admin/events?user_id=${userId}`);
+                if (eventsResponse.ok) {
+                    const eventsData = await eventsResponse.json();
+                    if (eventsData.events && eventsData.events.length > 0) {
+                        eventId = eventsData.events[0].id;
+                    }
+                }
+            } catch (error) {
+                console.log('Using default event ID for demo');
+            }
+            
+            const rsvpData = {
+                event_id: eventId,
+                family_name: familyName,
+                members_count: parseInt(membersCount),
+                attendance: attendance,
+                food_preference: foodPreference || null,
+                message: message || null
+            };
+            
+            try {
+                const response = await fetch('/api/rsvp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(rsvpData)
+                });
+                
+                if (response.ok) {
+                    showInvitationAlert('🎉 Thank you! Your RSVP has been submitted successfully. We can\'t wait to celebrate with you!', 'success');
+                    document.getElementById('invitationRSVPForm').reset();
+                } else {
+                    const errorData = await response.json();
+                    showInvitationAlert(errorData.detail || 'Failed to submit RSVP. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Error submitting RSVP:', error);
+                showInvitationAlert('Network error. Please check your connection and try again.', 'error');
+            }
+        }
+
+        // Show invitation alert
+        function showInvitationAlert(message, type) {
+            const alertDiv = document.getElementById('rsvpFormAlert');
+            alertDiv.style.display = 'block';
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = message;
+            
+            // Auto hide after 5 seconds for success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    alertDiv.style.display = 'none';
+                }, 5000);
             }
         }
 
@@ -2522,6 +2729,103 @@
 
         // Add event listener for create event form
         document.getElementById('createEventForm').addEventListener('submit', handleCreateEvent);
+
+        // Invitation Event Selection Functions
+        async function loadInvitationEvents() {
+            console.log('Loading invitation events...');
+            try {
+                let eventsUrl = '/api/admin/events';
+                if (!isAdmin()) {
+                    const userId = getCurrentUserId();
+                    console.log('User ID:', userId);
+                    eventsUrl += `?user_id=${userId}`;
+                }
+                
+                console.log('Fetching events from:', eventsUrl);
+                const response = await fetch(eventsUrl);
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Events data received:', data);
+                    const events = data.events || [];
+                    console.log('Events array:', events);
+                    populateInvitationEventCards(events);
+                } else {
+                    console.log('No events found for invitation - response not ok');
+                    populateInvitationEventCards([]);
+                }
+            } catch (error) {
+                console.error('Error loading events for invitation:', error);
+                populateInvitationEventCards([]);
+            }
+        }
+
+        function populateInvitationEventCards(events) {
+            console.log('Populating invitation event cards with:', events);
+            const container = document.getElementById('invitationEventCardsContainer');
+            console.log('Container element:', container);
+            
+            if (!container) {
+                console.error('invitationEventCardsContainer not found!');
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            if (events.length === 0) {
+                console.log('No events to display, showing empty state');
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">
+                        <i class="fas fa-heart" style="font-size: 48px; margin-bottom: 20px; opacity: 0.3;"></i>
+                        <h3>No Events Found</h3>
+                        <p>Create an event first to generate invitations.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            console.log('Creating event cards for', events.length, 'events');
+            
+            events.forEach(event => {
+                const eventCard = document.createElement('div');
+                eventCard.className = 'stat-card';
+                eventCard.style.cursor = 'pointer';
+                eventCard.style.transition = 'all 0.3s ease';
+                eventCard.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #f093fb, #f5576c); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 20px;">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <h3 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">${event.bride_name} & ${event.groom_name}</h3>
+                        <p style="margin: 0 0 5px 0; color: #666; font-size: 14px;"><i class="fas fa-calendar"></i> ${event.wedding_date}</p>
+                        <p style="margin: 0; color: #666; font-size: 12px;"><i class="fas fa-map-marker-alt"></i> ${event.location}</p>
+                    </div>
+                `;
+                
+                eventCard.addEventListener('click', () => selectInvitationEvent(event));
+                eventCard.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                    this.style.boxShadow = '0 15px 35px rgba(0,0,0,0.15)';
+                });
+                eventCard.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)';
+                });
+                
+                container.appendChild(eventCard);
+            });
+        }
+
+        function selectInvitationEvent(event) {
+            // Store selected event data in localStorage for the invitation page
+            localStorage.setItem('selectedEvent', JSON.stringify(event));
+            
+            // Redirect to the invitation page
+            window.location.href = 'invitation.html';
+        }
+
+        // Note: Dynamic invitation content functions removed since we now redirect to invitation.html
 
         // Logout
         function logout() {
