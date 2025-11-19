@@ -636,6 +636,47 @@ async def get_events(user_id: Optional[int] = None, db: Session = Depends(get_db
         "events": events_with_users
     }
 
+@app.get("/api/admin/users")
+async def get_users(db: Session = Depends(get_db)):
+    users = db.query(User).all()
+    users_data = []
+    for user in users:
+        users_data.append({
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+            "created_at": user.created_at
+        })
+    
+    return {
+        "success": True,
+        "users": users_data
+    }
+
+@app.delete("/api/admin/events/{event_id}")
+async def delete_event(event_id: int, db: Session = Depends(get_db)):
+    # Find the event
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    try:
+        # First, delete all RSVP responses associated with this event
+        db.query(RSVPResponse).filter(RSVPResponse.event_id == event_id).delete()
+        
+        # Then delete the event itself
+        db.delete(event)
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Event and associated RSVP responses deleted successfully"
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to delete event: {str(e)}")
+
 # RSVP endpoints
 @app.post("/api/rsvp/submit")
 async def submit_rsvp(rsvp: RSVPCreate, db: Session = Depends(get_db)):

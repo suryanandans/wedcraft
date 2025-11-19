@@ -818,6 +818,54 @@
             
             <div class="alert" id="eventAlert"></div>
             
+            <!-- Event Filters -->
+            <div class="filters-container" style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label style="font-weight: 500; color: #333; white-space: nowrap;">Filter Type:</label>
+                        <select id="dateFilterType" onchange="toggleDateFilterInputs()" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                            <option value="single">Single Date</option>
+                            <option value="range">Date Range</option>
+                        </select>
+                    </div>
+                    
+                    <div id="singleDateContainer" style="display: flex; align-items: center; gap: 10px;">
+                        <label style="font-weight: 500; color: #333; white-space: nowrap;">Date:</label>
+                        <input type="date" id="singleDateFilter" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                    </div>
+                    
+                    <div id="dateRangeContainer" style="display: none; align-items: center; gap: 10px;">
+                        <label style="font-weight: 500; color: #333; white-space: nowrap;">Date Range:</label>
+                        <input type="date" id="startDateFilter" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                        <span style="color: #666;">to</span>
+                        <input type="date" id="endDateFilter" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 10px;" id="userFilterContainer">
+                        <label style="font-weight: 500; color: #333; white-space: nowrap;">User:</label>
+                        <select id="userFilter" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; min-width: 150px;">
+                            <option value="">All Users</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="applyEventFilters()" style="padding: 8px 16px; font-size: 14px;">
+                            <i class="fas fa-filter"></i>
+                            Apply Filters
+                        </button>
+                        <button class="btn btn-outline" onclick="clearEventFilters()" style="padding: 8px 16px; font-size: 14px;">
+                            <i class="fas fa-times"></i>
+                            Clear
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="filterStatus" style="margin-top: 10px; font-size: 14px; color: #666; display: none;">
+                    <i class="fas fa-info-circle"></i>
+                    <span id="filterStatusText"></span>
+                </div>
+            </div>
+            
             <div class="table-container">
                 <table>
                     <thead>
@@ -1651,17 +1699,170 @@
                 if (response.ok) {
                     const data = await response.json();
                     events = data.events || [];
-                    renderEventsTable();
+                    allEvents = [...events]; // Store all events for filtering
+                    filteredEvents = [...events]; // Initialize filtered events
+                    renderEventsTable(filteredEvents);
+                    
+                    // Load users for filter dropdown (admin only)
+                    await loadUsersForFilter();
                 } else {
                     console.log('No events found');
                     events = [];
-                    renderEventsTable();
+                    allEvents = [];
+                    filteredEvents = [];
+                    renderEventsTable(filteredEvents);
                 }
             } catch (error) {
                 console.error('Error loading events:', error);
                 events = [];
-                renderEventsTable();
+                allEvents = [];
+                filteredEvents = [];
+                renderEventsTable(filteredEvents);
             }
+        }
+
+        // Global variables for filtering
+        let allEvents = [];
+        let filteredEvents = [];
+
+        // Load users for filter dropdown (admin only)
+        async function loadUsersForFilter() {
+            if (!isAdmin()) {
+                document.getElementById('userFilterContainer').style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/users');
+                if (response.ok) {
+                    const data = await response.json();
+                    const users = data.users || [];
+                    
+                    const userSelect = document.getElementById('userFilter');
+                    userSelect.innerHTML = '<option value="">All Users</option>';
+                    
+                    users.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = `${user.name} (${user.email})`;
+                        userSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading users for filter:', error);
+            }
+        }
+
+        // Toggle between single date and date range inputs
+        function toggleDateFilterInputs() {
+            const filterType = document.getElementById('dateFilterType').value;
+            const singleDateContainer = document.getElementById('singleDateContainer');
+            const dateRangeContainer = document.getElementById('dateRangeContainer');
+            
+            if (filterType === 'single') {
+                singleDateContainer.style.display = 'flex';
+                dateRangeContainer.style.display = 'none';
+                // Clear range inputs when switching to single
+                document.getElementById('startDateFilter').value = '';
+                document.getElementById('endDateFilter').value = '';
+            } else {
+                singleDateContainer.style.display = 'none';
+                dateRangeContainer.style.display = 'flex';
+                // Clear single input when switching to range
+                document.getElementById('singleDateFilter').value = '';
+            }
+        }
+
+        // Apply event filters
+        function applyEventFilters() {
+            const filterType = document.getElementById('dateFilterType').value;
+            const singleDate = document.getElementById('singleDateFilter').value;
+            const startDate = document.getElementById('startDateFilter').value;
+            const endDate = document.getElementById('endDateFilter').value;
+            const userId = document.getElementById('userFilter').value;
+
+            filteredEvents = allEvents.filter(event => {
+                // Date filtering - handle single day or date range
+                if (filterType === 'single' && singleDate) {
+                    // Single date filtering - exact match
+                    const eventDate = new Date(event.wedding_date);
+                    const filterDate = new Date(singleDate);
+                    
+                    // Compare dates (ignore time)
+                    eventDate.setHours(0, 0, 0, 0);
+                    filterDate.setHours(0, 0, 0, 0);
+                    
+                    if (eventDate.getTime() !== filterDate.getTime()) return false;
+                } else if (filterType === 'range' && (startDate || endDate)) {
+                    // Date range filtering
+                    const eventDate = new Date(event.wedding_date);
+                    eventDate.setHours(0, 0, 0, 0); // Normalize to start of day
+                    
+                    if (startDate && endDate) {
+                        // Both start and end dates provided
+                        const start = new Date(startDate);
+                        const end = new Date(endDate);
+                        start.setHours(0, 0, 0, 0);
+                        end.setHours(23, 59, 59, 999); // End of day
+                        
+                        if (eventDate < start || eventDate > end) return false;
+                    } else if (startDate && !endDate) {
+                        // Only start date provided (from start date onwards)
+                        const start = new Date(startDate);
+                        start.setHours(0, 0, 0, 0);
+                        
+                        if (eventDate < start) return false;
+                    } else if (!startDate && endDate) {
+                        // Only end date provided (up to end date)
+                        const end = new Date(endDate);
+                        end.setHours(23, 59, 59, 999);
+                        
+                        if (eventDate > end) return false;
+                    }
+                }
+
+                // User filtering (admin only)
+                if (userId && event.user_id != userId) return false;
+
+                return true;
+            });
+
+            renderEventsTable(filteredEvents);
+            updateFilterStatus();
+        }
+
+        // Clear event filters
+        function clearEventFilters() {
+            document.getElementById('singleDateFilter').value = '';
+            document.getElementById('startDateFilter').value = '';
+            document.getElementById('endDateFilter').value = '';
+            document.getElementById('userFilter').value = '';
+            document.getElementById('dateFilterType').value = 'single';
+            
+            // Reset to single date view
+            toggleDateFilterInputs();
+            
+            filteredEvents = [...allEvents];
+            renderEventsTable(filteredEvents);
+            hideFilterStatus();
+        }
+
+        // Update filter status display
+        function updateFilterStatus() {
+            const statusDiv = document.getElementById('filterStatus');
+            const statusText = document.getElementById('filterStatusText');
+            
+            if (filteredEvents.length !== allEvents.length) {
+                statusText.textContent = `Showing ${filteredEvents.length} of ${allEvents.length} events`;
+                statusDiv.style.display = 'block';
+            } else {
+                hideFilterStatus();
+            }
+        }
+
+        // Hide filter status
+        function hideFilterStatus() {
+            document.getElementById('filterStatus').style.display = 'none';
         }
         
         // Load upcoming events for users
@@ -1756,16 +1957,16 @@
         }
 
         // Render events table
-        function renderEventsTable() {
+        function renderEventsTable(eventsToRender = events) {
             const tbody = document.getElementById('eventsTableBody');
             tbody.innerHTML = '';
 
-            if (events.length === 0) {
+            if (eventsToRender.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">No events found</td></tr>';
                 return;
             }
 
-            events.forEach(event => {
+            eventsToRender.forEach(event => {
                 const row = document.createElement('tr');
                 // Use user name and email if available, otherwise show user ID
                 let userInfo = event.user_name || `User ID: ${event.user_id}`;
