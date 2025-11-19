@@ -1176,7 +1176,11 @@
                     loadRSVPResponses();
                     break;
                 case 'rsvp-responses':
-                    loadUserRSVPResponses();
+                    if (isAdmin()) {
+                        loadRSVPResponses();
+                    } else {
+                        loadUserRSVPResponses();
+                    }
                     break;
                 case 'dashboard':
                     loadDashboardData();
@@ -1187,34 +1191,12 @@
         // Load dashboard data
         async function loadDashboardData() {
             try {
-                // Build URL with user_id parameter for regular users
-                let statsUrl = '/api/admin/stats';
-                if (!isAdmin()) {
-                    const userId = getCurrentUserId();
-                    statsUrl += `?user_id=${userId}`;
-                }
-                
-                // Load dashboard stats from backend
-                const statsResponse = await fetch(statsUrl);
-                if (statsResponse.ok) {
-                    const statsData = await statsResponse.json();
-                    if (statsData.success) {
-                        if (isAdmin()) {
-                            // Admin stats
-                            document.getElementById('totalUsers').textContent = statsData.stats.total_users;
-                            document.getElementById('totalEvents').textContent = statsData.stats.total_events;
-                            document.getElementById('totalRSVPs').textContent = statsData.stats.total_rsvps;
-                            document.getElementById('activeEvents').textContent = statsData.stats.active_events;
-                        } else {
-                            // User stats
-                            document.getElementById('userTotalEvents').textContent = statsData.stats.total_events;
-                            document.getElementById('userTotalRSVPs').textContent = statsData.stats.total_rsvps;
-                            document.getElementById('userActiveEvents').textContent = statsData.stats.active_events;
-                        }
-                    }
+                if (isAdmin()) {
+                    // Load comprehensive analytics for admin
+                    await loadAdminAnalytics();
                 } else {
-                    // Fallback: load individual counts
-                    await loadIndividualStats();
+                    // Load user-specific analytics
+                    await loadUserAnalytics();
                 }
                 
                 // Load upcoming events for users
@@ -1223,6 +1205,79 @@
                 }
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
+                await loadIndividualStats();
+            }
+        }
+        
+        // Load admin analytics using new count.py endpoints
+        async function loadAdminAnalytics() {
+            try {
+                // Use new real-time stats endpoint
+                const statsResponse = await fetch('/api/analytics/real-time-stats');
+                if (statsResponse.ok) {
+                    const statsData = await statsResponse.json();
+                    if (statsData.success) {
+                        const stats = statsData.stats;
+                        
+                        // Update admin dashboard stats
+                        document.getElementById('totalUsers').textContent = stats.total_users || 0;
+                        document.getElementById('totalEvents').textContent = stats.total_events || 0;
+                        document.getElementById('totalRSVPs').textContent = stats.total_rsvp_responses || 0;
+                        document.getElementById('activeEvents').textContent = stats.active_events || 0;
+                        
+                        console.log('Admin analytics loaded successfully:', stats);
+                    }
+                } else {
+                    // Fallback to old endpoint
+                    await loadOldStatsEndpoint();
+                }
+            } catch (error) {
+                console.error('Error loading admin analytics:', error);
+                await loadOldStatsEndpoint();
+            }
+        }
+        
+        // Load user analytics using new count.py endpoints
+        async function loadUserAnalytics() {
+            try {
+                const userId = getCurrentUserId();
+                
+                // Use old stats endpoint with user_id for user-specific data
+                const statsResponse = await fetch(`/api/admin/stats?user_id=${userId}`);
+                if (statsResponse.ok) {
+                    const statsData = await statsResponse.json();
+                    if (statsData.success) {
+                        // Update user dashboard stats
+                        document.getElementById('userTotalEvents').textContent = statsData.stats.total_events || 0;
+                        document.getElementById('userTotalRSVPs').textContent = statsData.stats.total_rsvps || 0;
+                        document.getElementById('userActiveEvents').textContent = statsData.stats.active_events || 0;
+                        
+                        console.log('User analytics loaded successfully:', statsData.stats);
+                    }
+                } else {
+                    await loadIndividualStats();
+                }
+            } catch (error) {
+                console.error('Error loading user analytics:', error);
+                await loadIndividualStats();
+            }
+        }
+        
+        // Fallback to old stats endpoint
+        async function loadOldStatsEndpoint() {
+            try {
+                const statsResponse = await fetch('/api/admin/stats');
+                if (statsResponse.ok) {
+                    const statsData = await statsResponse.json();
+                    if (statsData.success) {
+                        document.getElementById('totalUsers').textContent = statsData.stats.total_users;
+                        document.getElementById('totalEvents').textContent = statsData.stats.total_events;
+                        document.getElementById('totalRSVPs').textContent = statsData.stats.total_rsvps;
+                        document.getElementById('activeEvents').textContent = statsData.stats.active_events;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading old stats:', error);
                 await loadIndividualStats();
             }
         }
@@ -1507,7 +1562,7 @@
             });
         }
 
-        // Load RSVP responses
+        // Load RSVP responses (individual responses only)
         async function loadRSVPResponses() {
             try {
                 const response = await fetch('/api/admin/rsvp-responses');
@@ -1527,13 +1582,13 @@
             }
         }
 
-        // Render RSVP table
+        // Render RSVP table (individual responses)
         function renderRSVPTable() {
-            const tbody = document.getElementById('rsvpTableBody');
+            const tbody = document.getElementById('rsvpResponsesTableBody');
             tbody.innerHTML = '';
 
             if (rsvpResponses.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">No RSVP responses found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #666;">No RSVP responses found</td></tr>';
                 return;
             }
 
@@ -1541,37 +1596,76 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${rsvp.id}</td>
+                    <td>${rsvp.event_name || 'Event ID: ' + rsvp.event_id}</td>
                     <td>${rsvp.family_name}</td>
                     <td><span class="badge badge-${rsvp.attendance.toLowerCase()}">${rsvp.attendance}</span></td>
                     <td>${rsvp.members_count || 'N/A'}</td>
                     <td>${rsvp.food_preference || 'N/A'}</td>
+                    <td>${rsvp.message || 'N/A'}</td>
                     <td>${new Date(rsvp.created_at).toLocaleDateString()}</td>
-                    <td>
-                        <button class="btn btn-secondary btn-sm" onclick="viewRSVP(${rsvp.id})">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </td>
                 `;
                 tbody.appendChild(row);
             });
         }
 
-        // Load user-specific RSVP responses
+        // Load user-specific RSVP responses (individual responses only)
         async function loadUserRSVPResponses() {
             try {
                 const userId = getCurrentUserId();
                 const response = await fetch(`/api/admin/rsvp-responses?user_id=${userId}`);
                 if (response.ok) {
                     const data = await response.json();
-                    const userRSVPResponses = data.responses || [];
-                    renderUserRSVPTable(userRSVPResponses);
+                    rsvpResponses = data.responses || [];
+                    
+                    // Calculate and update summary stats from the actual response data
+                    updateSummaryStatsFromResponses(rsvpResponses);
+                    
+                    renderRSVPTable();
                 } else {
                     console.log('No RSVP responses found for user');
-                    renderUserRSVPTable([]);
+                    rsvpResponses = [];
+                    updateSummaryStatsFromResponses([]);
+                    renderRSVPTable();
                 }
             } catch (error) {
                 console.error('Error loading user RSVP responses:', error);
-                renderUserRSVPTable([]);
+                rsvpResponses = [];
+                updateSummaryStatsFromResponses([]);
+                renderRSVPTable();
+            }
+        }
+        
+        // Load RSVP analytics using count.py
+        async function loadRSVPAnalytics(userId) {
+            try {
+                // Get analytics for user's events
+                const analyticsResponse = await fetch(`/api/analytics/rsvp-summary?event_id=${userId}`);
+                if (analyticsResponse.ok) {
+                    const analyticsData = await analyticsResponse.json();
+                    if (analyticsData.success && analyticsData.rsvp_data) {
+                        const rsvpData = analyticsData.rsvp_data;
+                        
+                        // Update RSVP summary statistics with processed data from count.py
+                        document.getElementById('totalFamiliesRegistered').textContent = rsvpData.total_families || 0;
+                        
+                        // Get predictions from analytics endpoint
+                        const predictionsResponse = await fetch(`/api/analytics/predictions?event_id=${userId}`);
+                        if (predictionsResponse.ok) {
+                            const predictionsData = await predictionsResponse.json();
+                            if (predictionsData.success && predictionsData.predictions) {
+                                const predictions = predictionsData.predictions;
+                                document.getElementById('predictedAttendees').textContent = predictions.expected_attendance || 0;
+                                document.getElementById('predictedVegCount').textContent = predictions.veg_required || 0;
+                                document.getElementById('predictedNonVegCount').textContent = predictions.nonveg_required || 0;
+                            }
+                        }
+                        
+                        console.log('RSVP analytics loaded from count.py:', rsvpData);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading RSVP analytics from count.py:', error);
+                // Fallback to basic calculations will be handled by renderUserRSVPTable
             }
         }
 
@@ -1630,6 +1724,102 @@
                 `;
                 tbody.appendChild(row);
             });
+        }
+
+        // Render processed analytics table
+        function renderProcessedAnalyticsTable(analyticsData) {
+            const tbody = document.getElementById('rsvpResponsesTableBody');
+            tbody.innerHTML = '';
+
+            if (analyticsData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #666;">No processed analytics data found</td></tr>';
+                // Reset stats to 0
+                document.getElementById('totalFamiliesRegistered').textContent = '0';
+                document.getElementById('predictedAttendees').textContent = '0';
+                document.getElementById('predictedVegCount').textContent = '0';
+                document.getElementById('predictedNonVegCount').textContent = '0';
+                return;
+            }
+
+            analyticsData.forEach(analytics => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${analytics.id}</td>
+                    <td>${analytics.event_name || 'Event ID: ' + analytics.event_id}</td>
+                    <td>${analytics.total_families} families</td>
+                    <td>
+                        <span class="badge badge-yes">${analytics.yes_responses} Yes</span>
+                        <span class="badge badge-maybe">${analytics.maybe_responses} Maybe</span>
+                        <span class="badge badge-no">${analytics.no_responses} No</span>
+                    </td>
+                    <td>${analytics.predicted_attendance}</td>
+                    <td>Veg: ${analytics.veg_required} | Non-veg: ${analytics.nonveg_required}</td>
+                    <td>${analytics.recommendations.length > 0 ? analytics.recommendations.slice(0, 2).join('; ') + (analytics.recommendations.length > 2 ? '...' : '') : 'None'}</td>
+                    <td>${new Date(analytics.processed_at).toLocaleDateString()}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update RSVP summary statistics from processed analytics
+        function updateRSVPSummaryStats(analyticsData) {
+            if (analyticsData.length === 0) {
+                document.getElementById('totalFamiliesRegistered').textContent = '0';
+                document.getElementById('predictedAttendees').textContent = '0';
+                document.getElementById('predictedVegCount').textContent = '0';
+                document.getElementById('predictedNonVegCount').textContent = '0';
+                return;
+            }
+
+            // Aggregate data from all events for this user
+            const totalFamilies = analyticsData.reduce((sum, analytics) => sum + analytics.total_families, 0);
+            const totalPredictedAttendees = analyticsData.reduce((sum, analytics) => sum + analytics.predicted_attendance, 0);
+            const totalVegRequired = analyticsData.reduce((sum, analytics) => sum + analytics.veg_required, 0);
+            const totalNonVegRequired = analyticsData.reduce((sum, analytics) => sum + analytics.nonveg_required, 0);
+
+            // Update summary statistics
+            document.getElementById('totalFamiliesRegistered').textContent = totalFamilies;
+            document.getElementById('predictedAttendees').textContent = totalPredictedAttendees;
+            document.getElementById('predictedVegCount').textContent = totalVegRequired;
+            document.getElementById('predictedNonVegCount').textContent = totalNonVegRequired;
+        }
+
+        // Update summary statistics from RSVP responses data
+        function updateSummaryStatsFromResponses(rsvpResponses) {
+            if (rsvpResponses.length === 0) {
+                document.getElementById('totalFamiliesRegistered').textContent = '0';
+                document.getElementById('predictedAttendees').textContent = '0';
+                document.getElementById('predictedVegCount').textContent = '0';
+                document.getElementById('predictedNonVegCount').textContent = '0';
+                return;
+            }
+
+            // Calculate statistics from actual response data
+            const totalFamilies = rsvpResponses.length;
+            const yesResponses = rsvpResponses.filter(r => r.attendance.toLowerCase() === 'yes');
+            const maybeResponses = rsvpResponses.filter(r => r.attendance.toLowerCase() === 'maybe');
+            
+            const confirmedAttendees = yesResponses.reduce((sum, r) => sum + (r.members_count || 0), 0);
+            const maybeAttendees = maybeResponses.reduce((sum, r) => sum + (r.members_count || 0), 0);
+            const predictedAttendees = confirmedAttendees + Math.round(maybeAttendees * 0.7);
+            
+            // Count actual food preferences from the data
+            const vegCount = rsvpResponses.filter(r =>
+                r.food_preference &&
+                r.food_preference.toLowerCase().includes('vegetarian') &&
+                !r.food_preference.toLowerCase().includes('non')
+            ).reduce((sum, r) => sum + (r.members_count || 0), 0);
+            
+            const nonVegCount = rsvpResponses.filter(r =>
+                r.food_preference &&
+                r.food_preference.toLowerCase().includes('non')
+            ).reduce((sum, r) => sum + (r.members_count || 0), 0);
+            
+            // Update summary statistics
+            document.getElementById('totalFamiliesRegistered').textContent = totalFamilies;
+            document.getElementById('predictedAttendees').textContent = predictedAttendees;
+            document.getElementById('predictedVegCount').textContent = vegCount;
+            document.getElementById('predictedNonVegCount').textContent = nonVegCount;
         }
 
         // Download RSVP data in CSV or PDF format
@@ -1797,6 +1987,111 @@
             const maybeAttendees = maybeResponses.reduce((sum, r) => sum + (r.members_count || 0), 0);
             
             return confirmedAttendees + Math.round(maybeAttendees * 0.7);
+        }
+
+        // Toggle RSVP view between summary and detailed
+        let currentRSVPView = 'summary';
+        
+        function toggleRSVPView(viewType) {
+            currentRSVPView = viewType;
+            
+            // Update button states
+            const summaryBtn = document.getElementById('summaryViewBtn');
+            const detailedBtn = document.getElementById('detailedViewBtn');
+            
+            if (viewType === 'summary') {
+                summaryBtn.className = 'btn btn-primary';
+                detailedBtn.className = 'btn btn-secondary';
+                
+                // Update table headers for summary view
+                const thead = document.querySelector('#rsvp-responses thead tr');
+                thead.innerHTML = `
+                    <th>ID</th>
+                    <th>Event</th>
+                    <th>Total Families</th>
+                    <th>Responses</th>
+                    <th>Predicted Attendance</th>
+                    <th>Food Requirements</th>
+                    <th>Recommendations</th>
+                    <th>Processed Date</th>
+                `;
+                
+                // Load and show processed analytics (summary view)
+                if (isAdmin()) {
+                    loadRSVPResponses();
+                } else {
+                    loadUserRSVPResponses();
+                }
+            } else {
+                summaryBtn.className = 'btn btn-secondary';
+                detailedBtn.className = 'btn btn-primary';
+                
+                // Update table headers for detailed view
+                const thead = document.querySelector('#rsvp-responses thead tr');
+                thead.innerHTML = `
+                    <th>ID</th>
+                    <th>Event</th>
+                    <th>Family Name</th>
+                    <th>Attendance</th>
+                    <th>Members Count</th>
+                    <th>Food Preference</th>
+                    <th>Message</th>
+                    <th>Submitted</th>
+                `;
+                
+                // Load and show detailed RSVP responses
+                loadDetailedRSVPResponses();
+            }
+        }
+        
+        // Load detailed RSVP responses (individual family responses)
+        async function loadDetailedRSVPResponses() {
+            try {
+                let rsvpUrl = '/api/admin/rsvp-responses';
+                if (!isAdmin()) {
+                    const userId = getCurrentUserId();
+                    rsvpUrl += `?user_id=${userId}`;
+                }
+                
+                const response = await fetch(rsvpUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    const rsvpResponses = data.responses || [];
+                    renderDetailedRSVPTable(rsvpResponses);
+                } else {
+                    console.log('No detailed RSVP responses found');
+                    renderDetailedRSVPTable([]);
+                }
+            } catch (error) {
+                console.error('Error loading detailed RSVP responses:', error);
+                renderDetailedRSVPTable([]);
+            }
+        }
+        
+        // Render detailed RSVP responses table (individual families)
+        function renderDetailedRSVPTable(rsvpResponses) {
+            const tbody = document.getElementById('rsvpResponsesTableBody');
+            tbody.innerHTML = '';
+
+            if (rsvpResponses.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #666;">No detailed RSVP responses found</td></tr>';
+                return;
+            }
+
+            rsvpResponses.forEach(rsvp => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${rsvp.id}</td>
+                    <td>${rsvp.event_name || 'Event ID: ' + rsvp.event_id}</td>
+                    <td>${rsvp.family_name}</td>
+                    <td><span class="badge badge-${rsvp.attendance.toLowerCase()}">${rsvp.attendance}</span></td>
+                    <td>${rsvp.members_count || 'N/A'}</td>
+                    <td>${rsvp.food_preference || 'N/A'}</td>
+                    <td>${rsvp.message || 'N/A'}</td>
+                    <td>${new Date(rsvp.created_at).toLocaleDateString()}</td>
+                `;
+                tbody.appendChild(row);
+            });
         }
 
         // Open create user modal

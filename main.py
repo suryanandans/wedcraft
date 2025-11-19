@@ -101,6 +101,25 @@ class RSVPResponse(Base):
     food_preference = Column(String, nullable=True)  # 'veg', 'non-veg'
     created_at = Column(DateTime, default=datetime.utcnow)
 
+# Processed Analytics table
+class ProcessedAnalytics(Base):
+    __tablename__ = "processed_analytics"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    event_id = Column(Integer, nullable=True)
+    total_families = Column(Integer, default=0)
+    yes_responses = Column(Integer, default=0)
+    no_responses = Column(Integer, default=0)
+    maybe_responses = Column(Integer, default=0)
+    predicted_attendance = Column(Integer, default=0)
+    veg_required = Column(Integer, default=0)
+    nonveg_required = Column(Integer, default=0)
+    children_count = Column(Integer, default=0)
+    attendance_rate = Column(String, default="0.0")
+    response_rate = Column(String, default="0.0")
+    recommendations = Column(Text, nullable=True)
+    processed_at = Column(DateTime, default=datetime.utcnow)
+
 # Pydantic Models
 class StandardRSVPSubmission(BaseModel):
     event_id: int
@@ -728,23 +747,111 @@ async def get_rsvp_responses(user_id: Optional[int] = None, db: Session = Depend
         # Admin view - all responses
         responses = db.query(RSVPResponse).all()
     
+    # Build response list with event information
+    response_list = []
+    for response in responses:
+        # Get event information for each response
+        event = db.query(Event).filter(Event.id == response.event_id).first()
+        event_name = None
+        if event:
+            event_name = f"{event.bride_name} & {event.groom_name}"
+        
+        response_list.append({
+            "id": response.id,
+            "event_id": response.event_id,
+            "event_name": event_name,
+            "family_name": response.family_name,
+            "attendance": response.attendance,
+            "members_count": response.members_count,
+            "food_preference": response.food_preference,
+            "message": None,  # RSVPResponse model doesn't have message field
+            "created_at": response.created_at.isoformat()
+        })
+    
     return {
         "success": True,
-        "responses": [
-            {
-                "id": response.id,
-                "event_id": response.event_id,
-                "event_name": f"{response.event.bride_name} & {response.event.groom_name}" if hasattr(response, 'event') and response.event else None,
-                "family_name": response.family_name,
-                "attendance": response.attendance,
-                "members_count": response.members_count,
-                "food_preference": response.food_preference,
-                "message": response.message if hasattr(response, 'message') else None,
-                "created_at": response.created_at.isoformat()
-            }
-            for response in responses
-        ]
+        "responses": response_list
     }
+
+# Processed Analytics endpoints
+@app.get("/api/admin/processed-analytics")
+async def get_processed_analytics(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+    """Get processed analytics data from count.py processing"""
+    try:
+        if user_id:
+            # Filter processed analytics for specific user's events
+            analytics = db.query(ProcessedAnalytics).join(Event, ProcessedAnalytics.event_id == Event.id).filter(Event.user_id == user_id).all()
+        else:
+            # Admin view - all processed analytics
+            analytics = db.query(ProcessedAnalytics).all()
+        
+        # Build response list with event information
+        analytics_list = []
+        for analytic in analytics:
+            # Get event information
+            event = db.query(Event).filter(Event.id == analytic.event_id).first()
+            event_name = None
+            if event:
+                event_name = f"{event.bride_name} & {event.groom_name}"
+            
+            # Parse recommendations JSON
+            recommendations = []
+            if analytic.recommendations:
+                try:
+                    import json
+                    recommendations = json.loads(analytic.recommendations)
+                except:
+                    recommendations = []
+            
+            analytics_list.append({
+                "id": analytic.id,
+                "event_id": analytic.event_id,
+                "event_name": event_name,
+                "total_families": analytic.total_families,
+                "yes_responses": analytic.yes_responses,
+                "no_responses": analytic.no_responses,
+                "maybe_responses": analytic.maybe_responses,
+                "predicted_attendance": analytic.predicted_attendance,
+                "veg_required": analytic.veg_required,
+                "nonveg_required": analytic.nonveg_required,
+                "children_count": analytic.children_count,
+                "attendance_rate": float(analytic.attendance_rate) if analytic.attendance_rate else 0.0,
+                "response_rate": float(analytic.response_rate) if analytic.response_rate else 0.0,
+                "recommendations": recommendations,
+                "processed_at": analytic.processed_at.isoformat()
+            })
+        
+        return {
+            "success": True,
+            "analytics": analytics_list
+        }
+        
+    except Exception as e:
+        print(f"Error fetching processed analytics: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "analytics": []
+        }
+
+@app.post("/api/admin/process-analytics")
+async def trigger_analytics_processing(db: Session = Depends(get_db)):
+    """Trigger processing of RSVP data through count.py"""
+    try:
+        # Import and run the processing script
+        from process_rsvp_data import process_and_store_analytics
+        process_and_store_analytics()
+        
+        return {
+            "success": True,
+            "message": "Analytics processing completed successfully"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to process analytics"
+        }
 
 # Form Template Management APIs
 @app.post("/api/admin/form-templates")
@@ -988,6 +1095,184 @@ async def get_dashboard_stats(user_id: Optional[int] = None, db: Session = Depen
             "total_form_responses": total_form_responses
         }
     }
+
+# Analytics endpoint using count.py
+@app.get("/api/analytics/wedding-data")
+async def get_wedding_analytics(event_id: Optional[int] = None, db: Session = Depends(get_db)):
+    """Get comprehensive wedding analytics using count.py processing"""
+    try:
+        # Import the analytics engine from count.py
+        from count import WeddingAnalytics
+        
+        # Initialize analytics engine
+        analytics_engine = WeddingAnalytics()
+        
+        # Generate analytics for specific event or all events
+        analytics_data = analytics_engine.generate_analytics(event_id)
+        
+        return {
+            "success": True,
+            "analytics": analytics_data,
+            "message": "Wedding analytics generated successfully"
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating analytics: {str(e)}"
+        )
+
+@app.get("/api/analytics/rsvp-summary")
+async def get_rsvp_summary(event_id: Optional[int] = None, db: Session = Depends(get_db)):
+    """Get RSVP summary data processed by count.py"""
+    try:
+        from count import WeddingAnalytics
+        
+        analytics_engine = WeddingAnalytics()
+        rsvp_data = analytics_engine.fetch_rsvp_data(event_id)
+        
+        return {
+            "success": True,
+            "rsvp_data": rsvp_data,
+            "message": "RSVP summary retrieved successfully"
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching RSVP summary: {str(e)}"
+        )
+
+@app.get("/api/analytics/form-responses")
+async def get_form_analytics(template_id: Optional[int] = None, db: Session = Depends(get_db)):
+    """Get form response analytics processed by count.py"""
+    try:
+        from count import WeddingAnalytics
+        
+        analytics_engine = WeddingAnalytics()
+        form_data = analytics_engine.fetch_form_responses(template_id)
+        
+        return {
+            "success": True,
+            "form_data": form_data,
+            "message": "Form analytics retrieved successfully"
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching form analytics: {str(e)}"
+        )
+
+@app.get("/api/analytics/predictions")
+async def get_attendance_predictions(event_id: Optional[int] = None, db: Session = Depends(get_db)):
+    """Get ML-based attendance predictions from count.py"""
+    try:
+        from count import WeddingAnalytics
+        
+        analytics_engine = WeddingAnalytics()
+        analytics_data = analytics_engine.generate_analytics(event_id)
+        
+        # Extract only prediction-related data
+        predictions = {
+            "expected_attendance": analytics_data["predictions"]["expected_attendance"],
+            "veg_required": analytics_data["predictions"]["veg_required"],
+            "nonveg_required": analytics_data["predictions"]["nonveg_required"],
+            "attendance_rate": analytics_data["analytics"]["attendance_rate"],
+            "recommendations": analytics_data["recommendations"]
+        }
+        
+        return {
+            "success": True,
+            "predictions": predictions,
+            "message": "Attendance predictions generated successfully"
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating predictions: {str(e)}"
+        )
+
+# New comprehensive analytics endpoints
+@app.get("/api/analytics/dashboard-data")
+async def get_dashboard_analytics(db: Session = Depends(get_db)):
+    """Get comprehensive dashboard analytics processed by count.py"""
+    try:
+        from count import WeddingAnalytics
+        
+        analytics_engine = WeddingAnalytics()
+        
+        # Get real-time stats for dashboard
+        dashboard_stats = analytics_engine.get_real_time_stats()
+        
+        # Get comprehensive analytics data
+        all_data = analytics_engine.fetch_all_data()
+        
+        return {
+            "success": True,
+            "dashboard_stats": dashboard_stats,
+            "comprehensive_data": all_data,
+            "message": "Dashboard analytics retrieved successfully"
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching dashboard analytics: {str(e)}"
+        )
+
+@app.get("/api/analytics/real-time-stats")
+async def get_real_time_stats(db: Session = Depends(get_db)):
+    """Get real-time statistics for live dashboard updates"""
+    try:
+        from count import WeddingAnalytics
+        
+        analytics_engine = WeddingAnalytics()
+        stats = analytics_engine.get_real_time_stats()
+        
+        return {
+            "success": True,
+            "stats": stats,
+            "message": "Real-time statistics retrieved successfully"
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching real-time stats: {str(e)}"
+        )
+
+@app.get("/api/analytics/comprehensive-report")
+async def get_comprehensive_report(event_id: Optional[int] = None, db: Session = Depends(get_db)):
+    """Get comprehensive analytics report with all processed data"""
+    try:
+        from count import WeddingAnalytics
+        
+        analytics_engine = WeddingAnalytics()
+        
+        if event_id:
+            # Get analytics for specific event
+            analytics_data = analytics_engine.generate_analytics(event_id)
+            return {
+                "success": True,
+                "event_analytics": analytics_data,
+                "message": f"Comprehensive report for event {event_id} generated successfully"
+            }
+        else:
+            # Get all data
+            all_data = analytics_engine.fetch_all_data()
+            return {
+                "success": True,
+                "comprehensive_report": all_data,
+                "message": "Comprehensive report generated successfully"
+            }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating comprehensive report: {str(e)}"
+        )
 
 # Startup event
 @app.on_event("startup")
