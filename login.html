@@ -369,11 +369,11 @@
                         document.getElementById('successMessage').textContent = 'Admin login successful! Redirecting to dashboard...';
                         document.getElementById('successMessage').style.display = 'block';
                         
-                        // Store admin session data for dashboard
-                        localStorage.setItem('adminLoggedIn', 'true');
-                        localStorage.setItem('adminData', JSON.stringify(result.admin));
-                        localStorage.setItem('adminEmail', email);
-                        localStorage.setItem('userType', 'admin');
+                        // Store admin session data for dashboard (using sessionStorage for tab isolation)
+                        sessionStorage.setItem('adminLoggedIn', 'true');
+                        sessionStorage.setItem('adminData', JSON.stringify(result.admin));
+                        sessionStorage.setItem('adminEmail', email);
+                        sessionStorage.setItem('userType', 'admin');
                         
                         // Redirect to dashboard
                         setTimeout(() => {
@@ -383,10 +383,10 @@
                         document.getElementById('successMessage').textContent = 'Login successful! Redirecting to dashboard...';
                         document.getElementById('successMessage').style.display = 'block';
                         
-                        // Store user session
-                        localStorage.setItem('userLoggedIn', 'true');
-                        localStorage.setItem('userData', JSON.stringify(result.user));
-                        localStorage.setItem('userType', 'user');
+                        // Store user session (using sessionStorage for tab isolation)
+                        sessionStorage.setItem('userLoggedIn', 'true');
+                        sessionStorage.setItem('userData', JSON.stringify(result.user));
+                        sessionStorage.setItem('userType', 'user');
                         
                         // All users redirect to dashboard.html
                         setTimeout(() => {
@@ -409,7 +409,7 @@
             e.preventDefault();
             
             // Check if admin is logged in
-            if (!localStorage.getItem('adminLoggedIn')) {
+            if (!sessionStorage.getItem('adminLoggedIn')) {
                 document.getElementById('userErrorMessage').textContent = 'Please login as admin first to create users.';
                 document.getElementById('userErrorMessage').style.display = 'block';
                 return;
@@ -458,10 +458,12 @@
 
         // Logout function
         function logout() {
-            localStorage.removeItem('adminLoggedIn');
-            localStorage.removeItem('adminEmail');
-            localStorage.removeItem('userLoggedIn');
-            localStorage.removeItem('userData');
+            sessionStorage.removeItem('adminLoggedIn');
+            sessionStorage.removeItem('adminEmail');
+            sessionStorage.removeItem('userLoggedIn');
+            sessionStorage.removeItem('userData');
+            sessionStorage.removeItem('adminData');
+            sessionStorage.removeItem('userType');
             
             // Hide user creation section
             document.getElementById('userCreationSection').style.display = 'none';
@@ -476,7 +478,7 @@
         }
 
         // Check if user is already logged in
-        if (localStorage.getItem('adminLoggedIn') || localStorage.getItem('userLoggedIn')) {
+        if (sessionStorage.getItem('adminLoggedIn') || sessionStorage.getItem('userLoggedIn')) {
             // Add a small delay to prevent flickering and redirect to dashboard
             setTimeout(() => {
                 window.location.href = 'dashboard.html';

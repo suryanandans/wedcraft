@@ -57,8 +57,9 @@ class Event(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=False)
-    bride_name = Column(String, nullable=False)
-    groom_name = Column(String, nullable=False)
+    event_name = Column(String, nullable=True)  # New field for generic event names
+    bride_name = Column(String, nullable=True)  # Made nullable for backward compatibility
+    groom_name = Column(String, nullable=True)  # Made nullable for backward compatibility
     wedding_date = Column(String, nullable=False)
     location = Column(String, nullable=False)
     invitation_message = Column(Text, nullable=True)
@@ -145,8 +146,9 @@ class AdminLogin(BaseModel):
 
 class EventCreate(BaseModel):
     user_id: int
-    bride_name: str
-    groom_name: str
+    event_name: Optional[str] = None  # New field for generic event names
+    bride_name: Optional[str] = None  # Made optional for backward compatibility
+    groom_name: Optional[str] = None  # Made optional for backward compatibility
     wedding_date: str
     location: str
     invitation_message: Optional[str] = None
@@ -548,9 +550,14 @@ async def create_event(event: EventCreate, db: Session = Depends(get_db)):
     if not user_exists:
         raise HTTPException(status_code=400, detail=f"User with ID {event.user_id} not found")
     
+    # Validate that either event_name is provided OR both bride_name and groom_name are provided
+    if not event.event_name and not (event.bride_name and event.groom_name):
+        raise HTTPException(status_code=400, detail="Either event_name or both bride_name and groom_name must be provided")
+    
     try:
         db_event = Event(
             user_id=actual_user_id,
+            event_name=event.event_name,
             bride_name=event.bride_name,
             groom_name=event.groom_name,
             wedding_date=event.wedding_date,
@@ -614,6 +621,7 @@ async def get_events(user_id: Optional[int] = None, db: Session = Depends(get_db
             "user_name": user_name or f"User ID: {event.user_id}",
             "user_email": user_email,
             "user_role": user_role,
+            "event_name": event.event_name,
             "bride_name": event.bride_name,
             "groom_name": event.groom_name,
             "wedding_date": event.wedding_date,
