@@ -17,8 +17,9 @@ import uuid
 from pathlib import Path
 
 # Database configuration
-SQLALCHEMY_DATABASE_URL = "sqlite:///./wedcraft.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+# MySQL connection string format: mysql+pymysql://username:password@host:port/database_name
+SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:root@localhost:3306/wedcrafts"
+engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -35,11 +36,11 @@ class User(Base):
     __tablename__ = "users"
     
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    role = Column(String, nullable=False, default="user")  # only 'user' role
-    wedding_date = Column(String, nullable=True)
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+    role = Column(String(50), nullable=False, default="user")  # only 'user' role
+    wedding_date = Column(String(20), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -47,10 +48,10 @@ class Admin(Base):
     __tablename__ = "admins"
     
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    role = Column(String, default="admin")
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+    role = Column(String(50), default="admin")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -59,13 +60,13 @@ class Event(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=False)
-    event_name = Column(String, nullable=True)  # New field for generic event names
-    bride_name = Column(String, nullable=True)  # Made nullable for backward compatibility
-    groom_name = Column(String, nullable=True)  # Made nullable for backward compatibility
-    wedding_date = Column(String, nullable=False)
-    location = Column(String, nullable=False)
+    event_name = Column(String(255), nullable=True)  # New field for generic event names
+    bride_name = Column(String(255), nullable=True)  # Made nullable for backward compatibility
+    groom_name = Column(String(255), nullable=True)  # Made nullable for backward compatibility
+    wedding_date = Column(String(20), nullable=False)
+    location = Column(String(500), nullable=False)
     invitation_message = Column(Text, nullable=True)
-    custom_invitation_file = Column(String, nullable=True)  # Path to custom invitation HTML file
+    custom_invitation_file = Column(String(500), nullable=True)  # Path to custom invitation HTML file
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -73,7 +74,7 @@ class FormTemplate(Base):
     __tablename__ = "form_templates"
     
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     form_schema = Column(Text, nullable=False)  # JSON schema for form fields
     is_active = Column(Boolean, default=True)
@@ -87,10 +88,10 @@ class FormResponse(Base):
     id = Column(Integer, primary_key=True, index=True)
     form_template_id = Column(Integer, nullable=False)
     response_data = Column(Text, nullable=False)  # JSON data of form responses
-    submitted_by_email = Column(String, nullable=True)
-    submitted_by_name = Column(String, nullable=True)
-    ip_address = Column(String, nullable=True)
-    user_agent = Column(String, nullable=True)
+    submitted_by_email = Column(String(255), nullable=True)
+    submitted_by_name = Column(String(255), nullable=True)
+    ip_address = Column(String(45), nullable=True)  # IPv6 max length
+    user_agent = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 # Keep RSVPResponse for backward compatibility
@@ -99,10 +100,10 @@ class RSVPResponse(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     event_id = Column(Integer, nullable=False)
-    family_name = Column(String, nullable=False)
-    attendance = Column(String, nullable=False)  # 'Yes', 'No', 'Maybe'
+    family_name = Column(String(255), nullable=False)
+    attendance = Column(String(20), nullable=False)  # 'Yes', 'No', 'Maybe'
     members_count = Column(Integer, nullable=True)
-    food_preference = Column(String, nullable=True)  # 'veg', 'non-veg'
+    food_preference = Column(String(50), nullable=True)  # 'veg', 'non-veg'
     created_at = Column(DateTime, default=datetime.utcnow)
 
 # Processed Analytics table
@@ -119,8 +120,8 @@ class ProcessedAnalytics(Base):
     veg_required = Column(Integer, default=0)
     nonveg_required = Column(Integer, default=0)
     children_count = Column(Integer, default=0)
-    attendance_rate = Column(String, default="0.0")
-    response_rate = Column(String, default="0.0")
+    attendance_rate = Column(String(10), default="0.0")
+    response_rate = Column(String(10), default="0.0")
     recommendations = Column(Text, nullable=True)
     processed_at = Column(DateTime, default=datetime.utcnow)
 

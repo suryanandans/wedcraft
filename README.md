@@ -139,7 +139,7 @@ wedcraft/
 ├── login.html            # Login page
 ├── dashboard.html        # Admin/User dashboard
 ├── assets/               # Static assets (images, etc.)
-├── wedcraft.db          # SQLite database (created automatically)
+├── wedcrafts            # MySQL database (create manually)
 └── README.md            # This file
 ```
 
@@ -163,8 +163,9 @@ wedcraft/
 ### Common Issues
 
 1. **Port Already in Use**: Change the port in `start_server.py` or `main.py`
-2. **Database Errors**: Delete `wedcraft.db` and run `python init_db.py` again
+2. **Database Errors**: Ensure MySQL is running and the `wedcrafts` database exists, then run `python init_db.py` again
 3. **Permission Errors**: Ensure you have write permissions in the project directory
+4. **MySQL Connection Errors**: Check MySQL credentials in the connection string and ensure MySQL service is running
 
 ### Logs and Debugging
 

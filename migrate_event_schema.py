@@ -3,29 +3,38 @@
 Database migration script to add event_name column to events table
 """
 
-import sqlite3
+import pymysql
 import sys
 
 def migrate_database():
     """Add event_name column to events table and make bride_name/groom_name nullable"""
     try:
+        # MySQL connection configuration
+        db_config = {
+            'host': 'localhost',
+            'user': 'root',
+            'password': 'root',
+            'database': 'wedcrafts',
+            'charset': 'utf8mb4'
+        }
+        
         # Connect to database
-        conn = sqlite3.connect('wedcraft.db')
+        conn = pymysql.connect(**db_config)
         cursor = conn.cursor()
         
         print("🔄 Starting database migration...")
         
         # Check if event_name column already exists
-        cursor.execute("PRAGMA table_info(events)")
-        columns = [column[1] for column in cursor.fetchall()]
+        cursor.execute("SHOW COLUMNS FROM events LIKE 'event_name'")
+        columns = cursor.fetchall()
         
-        if 'event_name' in columns:
+        if len(columns) > 0:
             print("✅ event_name column already exists, skipping migration")
             return
         
         # Add event_name column
         print("📝 Adding event_name column to events table...")
-        cursor.execute("ALTER TABLE events ADD COLUMN event_name TEXT")
+        cursor.execute("ALTER TABLE events ADD COLUMN event_name VARCHAR(255)")
         
         # Since SQLite doesn't support modifying column constraints directly,
         # we'll create a new table with the updated schema and migrate data

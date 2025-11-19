@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import sqlite3
+import pymysql
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error
@@ -14,8 +14,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class WeddingAnalytics:
-    def __init__(self, db_path: str = "wedcraft.db"):
-        self.db_path = db_path
+    def __init__(self, db_config: dict = None):
+        if db_config is None:
+            self.db_config = {
+                'host': 'localhost',
+                'user': 'root',
+                'password': 'root',
+                'database': 'wedcrafts',
+                'charset': 'utf8mb4'
+            }
+        else:
+            self.db_config = db_config
         self.model = None
         self._train_model()
     
@@ -54,12 +63,12 @@ class WeddingAnalytics:
     
     def fetch_rsvp_data(self, event_id: Optional[int] = None) -> Dict[str, Any]:
         """Fetch RSVP data from database and process it"""
-        conn = sqlite3.connect(self.db_path)
+        conn = pymysql.connect(**self.db_config)
         cursor = conn.cursor()
         
         try:
             if event_id:
-                query = "SELECT * FROM rsvp_responses WHERE event_id = ?"
+                query = "SELECT * FROM rsvp_responses WHERE event_id = %s"
                 cursor.execute(query, (event_id,))
             else:
                 query = "SELECT * FROM rsvp_responses"
@@ -123,12 +132,12 @@ class WeddingAnalytics:
     
     def fetch_form_responses(self, template_id: Optional[int] = None) -> Dict[str, Any]:
         """Fetch form response data from database"""
-        conn = sqlite3.connect(self.db_path)
+        conn = pymysql.connect(**self.db_config)
         cursor = conn.cursor()
         
         try:
             if template_id:
-                query = "SELECT * FROM form_responses WHERE form_template_id = ?"
+                query = "SELECT * FROM form_responses WHERE form_template_id = %s"
                 cursor.execute(query, (template_id,))
             else:
                 query = "SELECT * FROM form_responses"
@@ -249,7 +258,7 @@ class WeddingAnalytics:
         """Fetch and process all data from database tables"""
         logger.info("Fetching all data from database tables...")
         
-        conn = sqlite3.connect(self.db_path)
+        conn = pymysql.connect(**self.db_config)
         cursor = conn.cursor()
         
         try:
@@ -382,7 +391,7 @@ class WeddingAnalytics:
         """Get real-time statistics for dashboard"""
         logger.info("Generating real-time statistics...")
         
-        conn = sqlite3.connect(self.db_path)
+        conn = pymysql.connect(**self.db_config)
         cursor = conn.cursor()
         
         try:

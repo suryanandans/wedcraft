@@ -1,27 +1,36 @@
-import sqlite3
+import pymysql
 from datetime import datetime
 
 def create_analytics_table():
     """Create a table to store processed analytics data"""
-    conn = sqlite3.connect('wedcraft.db')
+    # MySQL connection configuration
+    db_config = {
+        'host': 'localhost',
+        'user': 'root',
+        'password': 'root',
+        'database': 'wedcrafts',
+        'charset': 'utf8mb4'
+    }
+    
+    conn = pymysql.connect(**db_config)
     cursor = conn.cursor()
     
     try:
         # Create processed_analytics table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS processed_analytics (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                event_id INTEGER,
-                total_families INTEGER DEFAULT 0,
-                yes_responses INTEGER DEFAULT 0,
-                no_responses INTEGER DEFAULT 0,
-                maybe_responses INTEGER DEFAULT 0,
-                predicted_attendance INTEGER DEFAULT 0,
-                veg_required INTEGER DEFAULT 0,
-                nonveg_required INTEGER DEFAULT 0,
-                children_count INTEGER DEFAULT 0,
-                attendance_rate REAL DEFAULT 0.0,
-                response_rate REAL DEFAULT 0.0,
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                event_id INT,
+                total_families INT DEFAULT 0,
+                yes_responses INT DEFAULT 0,
+                no_responses INT DEFAULT 0,
+                maybe_responses INT DEFAULT 0,
+                predicted_attendance INT DEFAULT 0,
+                veg_required INT DEFAULT 0,
+                nonveg_required INT DEFAULT 0,
+                children_count INT DEFAULT 0,
+                attendance_rate VARCHAR(10) DEFAULT '0.0',
+                response_rate VARCHAR(10) DEFAULT '0.0',
                 recommendations TEXT,
                 processed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (event_id) REFERENCES events (id)
@@ -36,11 +45,11 @@ def create_analytics_table():
         print("✅ processed_analytics table created successfully!")
         
         # Show table structure
-        cursor.execute("PRAGMA table_info(processed_analytics)")
+        cursor.execute("SHOW COLUMNS FROM processed_analytics")
         columns = cursor.fetchall()
         print("\nTable structure:")
         for col in columns:
-            print(f"  {col[1]} ({col[2]})")
+            print(f"  {col[0]} ({col[1]})")
             
     except Exception as e:
         print(f"❌ Error creating table: {e}")

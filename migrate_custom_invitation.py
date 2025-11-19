@@ -1,44 +1,47 @@
 #!/usr/bin/env python3
 
-import sqlite3
+import pymysql
 import os
 
 def migrate_custom_invitation_field():
     """Add custom_invitation_file column to events table"""
     
-    db_path = "wedcraft.db"
-    
-    if not os.path.exists(db_path):
-        print(f"Database file {db_path} not found!")
-        return
+    # MySQL connection configuration
+    db_config = {
+        'host': 'localhost',
+        'user': 'root',
+        'password': 'root',
+        'database': 'wedcrafts',
+        'charset': 'utf8mb4'
+    }
     
     try:
         # Connect to database
-        conn = sqlite3.connect(db_path)
+        conn = pymysql.connect(**db_config)
         cursor = conn.cursor()
         
         # Check if column already exists
-        cursor.execute("PRAGMA table_info(events)")
-        columns = [column[1] for column in cursor.fetchall()]
+        cursor.execute("SHOW COLUMNS FROM events LIKE 'custom_invitation_file'")
+        columns = cursor.fetchall()
         
-        if 'custom_invitation_file' in columns:
+        if len(columns) > 0:
             print("custom_invitation_file column already exists!")
             return
         
         # Add the new column
         cursor.execute("""
-            ALTER TABLE events 
-            ADD COLUMN custom_invitation_file TEXT
+            ALTER TABLE events
+            ADD COLUMN custom_invitation_file VARCHAR(500)
         """)
         
         # Commit changes
         conn.commit()
         
         # Verify the column was added
-        cursor.execute("PRAGMA table_info(events)")
-        columns = [column[1] for column in cursor.fetchall()]
+        cursor.execute("SHOW COLUMNS FROM events LIKE 'custom_invitation_file'")
+        columns = cursor.fetchall()
         
-        if 'custom_invitation_file' in columns:
+        if len(columns) > 0:
             print("✅ Successfully added custom_invitation_file column to events table")
         else:
             print("❌ Failed to add custom_invitation_file column")
@@ -48,7 +51,7 @@ def migrate_custom_invitation_field():
         count = cursor.fetchone()[0]
         print(f"📊 Total events in database: {count}")
         
-    except sqlite3.Error as e:
+    except pymysql.Error as e:
         print(f"❌ Database error: {e}")
     except Exception as e:
         print(f"❌ Unexpected error: {e}")

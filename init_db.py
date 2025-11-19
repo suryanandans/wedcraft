@@ -10,8 +10,8 @@ from main import Base, User, Admin, Event, RSVPResponse, get_password_hash
 from datetime import datetime
 
 # Database configuration
-SQLALCHEMY_DATABASE_URL = "sqlite:///./wedcraft.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:root@localhost:3306/wedcrafts"
+engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_database():

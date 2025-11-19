@@ -1,6 +1,15 @@
-import sqlite3
+import pymysql
 
-conn = sqlite3.connect('wedcraft.db')
+# MySQL connection configuration
+db_config = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': 'root',
+    'database': 'wedcrafts',
+    'charset': 'utf8mb4'
+}
+
+conn = pymysql.connect(**db_config)
 cursor = conn.cursor()
 
 print('=== TOTAL RSVP RESPONSES ===')

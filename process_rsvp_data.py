@@ -1,4 +1,4 @@
-import sqlite3
+import pymysql
 import json
 from count import WeddingAnalytics
 from datetime import datetime
@@ -9,7 +9,16 @@ def process_and_store_analytics():
     # Initialize analytics engine
     analytics_engine = WeddingAnalytics()
     
-    conn = sqlite3.connect('wedcraft.db')
+    # MySQL connection configuration
+    db_config = {
+        'host': 'localhost',
+        'user': 'root',
+        'password': 'root',
+        'database': 'wedcrafts',
+        'charset': 'utf8mb4'
+    }
+    
+    conn = pymysql.connect(**db_config)
     cursor = conn.cursor()
     
     try:
@@ -41,7 +50,7 @@ def process_and_store_analytics():
                     event_id, total_families, yes_responses, no_responses, maybe_responses,
                     predicted_attendance, veg_required, nonveg_required, children_count,
                     attendance_rate, response_rate, recommendations, processed_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ''', (
                 event_id,
                 rsvp_summary["total_families"],

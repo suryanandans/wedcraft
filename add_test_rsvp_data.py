@@ -1,10 +1,19 @@
-import sqlite3
+import pymysql
 from datetime import datetime
 
 def add_test_rsvp_data():
     """Add test RSVP data with more non-vegetarian than vegetarian responses"""
     
-    conn = sqlite3.connect('wedcraft.db')
+    # MySQL connection configuration
+    db_config = {
+        'host': 'localhost',
+        'user': 'root',
+        'password': 'root',
+        'database': 'wedcrafts',
+        'charset': 'utf8mb4'
+    }
+    
+    conn = pymysql.connect(**db_config)
     cursor = conn.cursor()
     
     try:
@@ -34,7 +43,7 @@ def add_test_rsvp_data():
         for rsvp in test_rsvps:
             cursor.execute('''
                 INSERT INTO rsvp_responses (event_id, family_name, attendance, members_count, food_preference, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s)
             ''', (*rsvp, datetime.now().isoformat()))
         
         conn.commit()
