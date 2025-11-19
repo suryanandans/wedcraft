@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Wedding Invitation</title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .invitation-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            color: #764ba2;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .couple-names {
+            font-size: 1.8em;
+            color: #333;
+            margin: 20px 0;
+        }
+        .event-details {
+            font-size: 1.2em;
+            color: #666;
+            line-height: 1.6;
+            margin: 30px 0;
+        }
+        .decorative-line {
+            width: 100px;
+            height: 2px;
+            background: #764ba2;
+            margin: 20px auto;
+        }
+        .rsvp-section {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .rsvp-button {
+            background: #764ba2;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+        .rsvp-button:hover {
+            background: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="invitation-card">
+        <div class="header">You're Invited!</div>
+        <div class="decorative-line"></div>
+        
+        <div class="couple-names">
+            John & Jane
+        </div>
+        
+        <div class="event-details">
+            <p><strong>Wedding Celebration</strong></p>
+            <p>Saturday, December 15th, 2024</p>
+            <p>4:00 PM</p>
+            <p>Grand Ballroom<br>
+            123 Wedding Avenue<br>
+            City, State 12345</p>
+        </div>
+        
+        <div class="decorative-line"></div>
+        
+        <div class="rsvp-section">
+            <p>Please join us for this special day!</p>
+            <a href="/rsvp" class="rsvp-button">RSVP Now</a>
+        </div>
+    </div>
+</body>
+</html>

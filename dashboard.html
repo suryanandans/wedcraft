@@ -167,8 +167,8 @@
         .sidebar {
             position: fixed;
             top: 70px;
-            left: -300px;
-            width: 300px;
+            left: 0;
+            width: 70px;
             height: calc(100vh - 70px);
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
@@ -179,12 +179,20 @@
         }
 
         .sidebar.active {
-            left: 0;
+            width: 300px;
         }
 
         .sidebar-header {
-            padding: 30px 20px 20px;
+            padding: 20px 10px 15px;
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.active .sidebar-header {
+            padding: 30px 20px 20px;
+            text-align: left;
         }
 
         .sidebar-title {
@@ -192,11 +200,22 @@
             font-weight: 600;
             color: #333;
             margin-bottom: 5px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
         .sidebar-subtitle {
             font-size: 14px;
             color: #666;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .sidebar.active .sidebar-title,
+        .sidebar.active .sidebar-subtitle {
+            opacity: 1;
         }
 
         .sidebar-nav {
@@ -212,6 +231,14 @@
             text-decoration: none;
             transition: all 0.3s ease;
             border-left: 3px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar:not(.active) .nav-item {
+            justify-content: center;
+            padding: 15px 5px;
+            gap: 0;
         }
 
         .nav-item:hover, .nav-item.active {
@@ -220,14 +247,36 @@
             border-left-color: #667eea;
         }
 
+        .sidebar:not(.active) .nav-item:hover,
+        .sidebar:not(.active) .nav-item.active {
+            border-left-color: transparent;
+        }
+
         .nav-item i {
             width: 20px;
             text-align: center;
+            flex-shrink: 0;
+            font-size: 18px;
+            display: block;
+        }
+
+        .nav-item span {
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            width: 0;
+            overflow: hidden;
+        }
+
+        .sidebar.active .nav-item span {
+            opacity: 1;
+            width: auto;
         }
 
         /* Main Content Styles */
         .main-content {
             margin-top: 70px;
+            margin-left: 70px;
             padding: 30px;
             transition: all 0.3s ease;
         }
@@ -510,6 +559,10 @@
 
         /* Responsive Design */
         @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+            }
+            
             .main-content.sidebar-open {
                 margin-left: 0;
             }
@@ -517,6 +570,11 @@
             .sidebar {
                 width: 100%;
                 left: -100%;
+            }
+            
+            .sidebar.active {
+                left: 0;
+                width: 100%;
             }
 
             .header {
@@ -625,27 +683,27 @@
         <div class="sidebar-nav">
             <a href="#" class="nav-item active" onclick="showSection('dashboard')">
                 <i class="fas fa-tachometer-alt"></i>
-                Dashboard
+                <span>Dashboard</span>
             </a>
             <a href="#" class="nav-item" onclick="showSection('users')">
                 <i class="fas fa-users"></i>
-                Users
+                <span>Users</span>
             </a>
             <a href="#" class="nav-item" onclick="showSection('admin')">
                 <i class="fas fa-user-shield"></i>
-                Admin
+                <span>Admin</span>
             </a>
             <a href="#" class="nav-item" onclick="showSection('events')">
                 <i class="fas fa-calendar-alt"></i>
-                Events
+                <span>Events</span>
             </a>
             <a href="#" class="nav-item" onclick="showSection('invitation')">
                 <i class="fas fa-heart"></i>
-                Invitation
+                <span>Invitation</span>
             </a>
             <a href="#" class="nav-item" onclick="showSection('rsvp-responses')">
                 <i class="fas fa-envelope-open-text"></i>
-                RSVP Responses
+                <span>RSVP Responses</span>
             </a>
         </div>
     </nav>
@@ -1132,6 +1190,53 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Upload Invitation Modal -->
+    <div class="modal" id="uploadInvitationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Upload Custom Invitation</h2>
+                <button class="close-btn" onclick="closeUploadInvitationModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert" id="uploadInvitationAlert" style="display: none;"></div>
+                
+                <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
+                    <h4 style="margin: 0 0 10px 0; color: #007bff;">
+                        <i class="fas fa-info-circle"></i> Instructions
+                    </h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #666;">
+                        <li>Upload a complete HTML file for this event's invitation</li>
+                        <li>The file should include all CSS and JavaScript inline</li>
+                        <li>Make sure to include RSVP form functionality</li>
+                        <li>Only HTML files (.html) are accepted</li>
+                        <li>This will replace the default invitation for this event</li>
+                    </ul>
+                </div>
+                
+                <form id="uploadInvitationForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label class="form-label">Event</label>
+                        <input type="text" class="form-input" id="uploadEventName" readonly style="background: #f8f9fa;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Select HTML File</label>
+                        <input type="file" class="form-input" id="invitationFile" accept=".html" required>
+                        <small style="color: #666; font-size: 12px;">Choose an HTML file for the custom invitation</small>
+                    </div>
+                    
+                    <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeUploadInvitationModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span id="uploadInvitationBtnText">Upload Invitation</span>
+                            <div class="loading" id="uploadInvitationLoading" style="display: none;"></div>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -1985,6 +2090,9 @@
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <button class="btn btn-secondary btn-sm" onclick="viewEvent(${event.id})" title="View Event">
                                 <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="openUploadInvitationModal(${event.id})" title="Upload Custom Invitation">
+                                <i class="fas fa-upload"></i>
                             </button>
                             <button class="btn btn-danger btn-sm" onclick="deleteEvent(${event.id})" title="Delete Event">
                                 <i class="fas fa-trash"></i>
@@ -2989,6 +3097,144 @@
                 console.error('Error deleting event:', error);
                 showAlert('eventAlert', 'Error deleting event', 'error');
             }
+        }
+
+        // Upload invitation functions
+        let currentUploadEventId = null;
+
+        function openUploadInvitationModal(eventId) {
+            console.log('openUploadInvitationModal called with eventId:', eventId);
+            currentUploadEventId = eventId;
+            
+            // Find the event to get its name
+            let eventName = 'Unknown Event';
+            if (typeof allEvents !== 'undefined' && allEvents && allEvents.length > 0) {
+                const event = allEvents.find(e => e.id === eventId);
+                if (event) {
+                    eventName = getEventDisplayName(event);
+                }
+            }
+            
+            console.log('Event name:', eventName);
+            
+            // Check if modal exists
+            const modal = document.getElementById('uploadInvitationModal');
+            if (!modal) {
+                console.error('Upload invitation modal not found');
+                return;
+            }
+            
+            const eventNameInput = document.getElementById('uploadEventName');
+            if (eventNameInput) {
+                eventNameInput.value = eventName;
+            }
+            
+            modal.style.display = 'flex';
+            
+            // Reset form
+            const form = document.getElementById('uploadInvitationForm');
+            if (form) {
+                form.reset();
+                if (eventNameInput) {
+                    eventNameInput.value = eventName;
+                }
+            }
+            
+            hideUploadInvitationAlert();
+            console.log('Modal should be visible now');
+        }
+
+        function closeUploadInvitationModal() {
+            document.getElementById('uploadInvitationModal').style.display = 'none';
+            currentUploadEventId = null;
+        }
+
+        // Handle upload invitation form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadForm = document.getElementById('uploadInvitationForm');
+            if (uploadForm) {
+                uploadForm.addEventListener('submit', handleUploadInvitation);
+            }
+        });
+
+        async function handleUploadInvitation(e) {
+            e.preventDefault();
+            
+            if (!currentUploadEventId) {
+                showUploadInvitationAlert('No event selected', 'error');
+                return;
+            }
+            
+            const fileInput = document.getElementById('invitationFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showUploadInvitationAlert('Please select an HTML file', 'error');
+                return;
+            }
+            
+            if (!file.name.endsWith('.html')) {
+                showUploadInvitationAlert('Only HTML files are allowed', 'error');
+                return;
+            }
+            
+            const submitBtn = document.querySelector('#uploadInvitationForm button[type="submit"]');
+            const btnText = document.getElementById('uploadInvitationBtnText');
+            const loading = document.getElementById('uploadInvitationLoading');
+            
+            // Show loading state
+            btnText.style.display = 'none';
+            loading.style.display = 'inline-block';
+            submitBtn.disabled = true;
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch(`/api/admin/events/${currentUploadEventId}/upload-invitation`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showUploadInvitationAlert('Custom invitation uploaded successfully!', 'success');
+                    
+                    // Close modal after 2 seconds
+                    setTimeout(() => {
+                        closeUploadInvitationModal();
+                    }, 2000);
+                } else {
+                    const error = await response.json();
+                    showUploadInvitationAlert(error.detail || 'Failed to upload invitation', 'error');
+                }
+            } catch (error) {
+                console.error('Error uploading invitation:', error);
+                showUploadInvitationAlert('Network error. Please try again.', 'error');
+            } finally {
+                // Reset button state
+                btnText.style.display = 'inline';
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+
+        function showUploadInvitationAlert(message, type) {
+            const alertDiv = document.getElementById('uploadInvitationAlert');
+            alertDiv.style.display = 'block';
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = message;
+            
+            // Auto hide success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    hideUploadInvitationAlert();
+                }, 5000);
+            }
+        }
+
+        function hideUploadInvitationAlert() {
+            document.getElementById('uploadInvitationAlert').style.display = 'none';
         }
 
         // View RSVP

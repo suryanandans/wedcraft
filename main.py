@@ -1,8 +1,8 @@
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 from typing import Optional, List
 import jwt
 import os
+import shutil
+import uuid
 from pathlib import Path
 
 # Database configuration
@@ -63,6 +65,7 @@ class Event(Base):
     wedding_date = Column(String, nullable=False)
     location = Column(String, nullable=False)
     invitation_message = Column(Text, nullable=True)
+    custom_invitation_file = Column(String, nullable=True)  # Path to custom invitation HTML file
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -676,6 +679,91 @@ async def delete_event(event_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to delete event: {str(e)}")
+
+# Custom invitation endpoints
+@app.post("/api/admin/events/{event_id}/upload-invitation")
+async def upload_custom_invitation(
+    event_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    # Find the event
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Validate file type
+    if not file.filename.endswith('.html'):
+        raise HTTPException(status_code=400, detail="Only HTML files are allowed")
+    
+    try:
+        # Create unique filename
+        file_extension = file.filename.split('.')[-1]
+        unique_filename = f"event_{event_id}_{uuid.uuid4().hex}.{file_extension}"
+        file_path = f"custom_invitations/{unique_filename}"
+        
+        # Save file
+        os.makedirs("custom_invitations", exist_ok=True)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        # Update event record
+        event.custom_invitation_file = file_path
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Custom invitation uploaded successfully",
+            "file_path": file_path
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to upload invitation: {str(e)}")
+
+@app.get("/api/invitation/{event_id}")
+async def get_custom_invitation(event_id: int, db: Session = Depends(get_db)):
+    # Find the event
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Check if custom invitation exists
+    if event.custom_invitation_file and os.path.exists(event.custom_invitation_file):
+        return FileResponse(
+            path=event.custom_invitation_file,
+            media_type="text/html",
+            filename=f"invitation_event_{event_id}.html"
+        )
+    else:
+        # Return default invitation page
+        return FileResponse(
+            path="invitation.html",
+            media_type="text/html"
+        )
+
+@app.delete("/api/admin/events/{event_id}/invitation")
+async def delete_custom_invitation(event_id: int, db: Session = Depends(get_db)):
+    # Find the event
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    try:
+        # Delete file if exists
+        if event.custom_invitation_file and os.path.exists(event.custom_invitation_file):
+            os.remove(event.custom_invitation_file)
+        
+        # Update event record
+        event.custom_invitation_file = None
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Custom invitation deleted successfully"
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to delete invitation: {str(e)}")
 
 # RSVP endpoints
 @app.post("/api/rsvp/submit")
