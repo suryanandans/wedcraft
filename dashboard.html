@@ -836,75 +836,104 @@
 
         <!-- RSVP Responses Section -->
         <section class="content-section" id="rsvp-responses">
-            <div class="section-header">
-                <h1 class="section-title">
-                    <i class="fas fa-envelope-open-text"></i>
-                    RSVP Responses
-                </h1>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-secondary" onclick="downloadRSVPData('csv')">
-                        <i class="fas fa-download"></i>
-                        Download CSV
-                    </button>
-                    <button class="btn btn-secondary" onclick="downloadRSVPData('pdf')">
-                        <i class="fas fa-file-pdf"></i>
-                        Download PDF
-                    </button>
+            <!-- Event Selection View -->
+            <div id="eventSelectionView">
+                <div class="section-header">
+                    <h1 class="section-title">
+                        <i class="fas fa-envelope-open-text"></i>
+                        Select Event for RSVP Responses
+                    </h1>
+                </div>
+                
+                <div class="alert" id="rsvpAlert"></div>
+                
+                <div style="padding: 40px 20px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 24px;">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <h3 style="margin: 0; color: #333; font-size: 20px;">Choose an Event</h3>
+                        <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;">Select an event to view its RSVP responses</p>
+                    </div>
+                    
+                    <div id="eventCardsContainer" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1000px; margin: 0 auto;">
+                        <!-- Event selection options will be loaded here -->
+                    </div>
                 </div>
             </div>
             
-            <div class="alert" id="rsvpAlert"></div>
-            
-            <!-- RSVP Summary Statistics -->
-            <div class="stats-grid" style="margin-bottom: 30px;">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-                        <i class="fas fa-users"></i>
+            <!-- RSVP Responses View -->
+            <div id="rsvpResponsesView" style="display: none;">
+                <div class="section-header">
+                    <h1 class="section-title">
+                        <i class="fas fa-envelope-open-text"></i>
+                        <span id="selectedEventTitle">RSVP Responses</span>
+                    </h1>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="backToEventSelection()">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Events
+                        </button>
+                        <button class="btn btn-secondary" onclick="downloadRSVPData('csv')">
+                            <i class="fas fa-download"></i>
+                            Download CSV
+                        </button>
+                        <button class="btn btn-secondary" onclick="downloadRSVPData('pdf')">
+                            <i class="fas fa-file-pdf"></i>
+                            Download PDF
+                        </button>
                     </div>
-                    <div class="stat-number" id="totalFamiliesRegistered">0</div>
-                    <div class="stat-label">Families Registered</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
-                        <i class="fas fa-user-check"></i>
+                
+                <!-- RSVP Summary Statistics -->
+                <div class="stats-grid" style="margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-number" id="totalFamiliesRegistered">0</div>
+                        <div class="stat-label">Families Registered</div>
                     </div>
-                    <div class="stat-number" id="predictedAttendees">0</div>
-                    <div class="stat-label">Predicted Attendees</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
-                        <i class="fas fa-leaf"></i>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="stat-number" id="predictedAttendees">0</div>
+                        <div class="stat-label">Predicted Attendees</div>
                     </div>
-                    <div class="stat-number" id="predictedVegCount">0</div>
-                    <div class="stat-label">Predicted Vegetarian</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
-                        <i class="fas fa-drumstick-bite"></i>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                            <i class="fas fa-leaf"></i>
+                        </div>
+                        <div class="stat-number" id="predictedVegCount">0</div>
+                        <div class="stat-label">Predicted Vegetarian</div>
                     </div>
-                    <div class="stat-number" id="predictedNonVegCount">0</div>
-                    <div class="stat-label">Predicted Non-Veg</div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                            <i class="fas fa-drumstick-bite"></i>
+                        </div>
+                        <div class="stat-number" id="predictedNonVegCount">0</div>
+                        <div class="stat-label">Predicted Non-Veg</div>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Event</th>
-                            <th>Family Name</th>
-                            <th>Attendance</th>
-                            <th>Members Count</th>
-                            <th>Food Preference</th>
-                            <th>Message</th>
-                            <th>Submitted</th>
-                        </tr>
-                    </thead>
-                    <tbody id="rsvpResponsesTableBody">
-                        <!-- RSVP responses will be loaded here -->
-                    </tbody>
-                </table>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Family Name</th>
+                                <th>Members Count</th>
+                                <th>Food Preference</th>
+                                <th>Message</th>
+                                <th>Submitted</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rsvpResponsesTableBody">
+                            <!-- RSVP responses will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -1562,24 +1591,10 @@
             });
         }
 
-        // Load RSVP responses (individual responses only)
+        // Load RSVP responses - show event selection first
         async function loadRSVPResponses() {
-            try {
-                const response = await fetch('/api/admin/rsvp-responses');
-                if (response.ok) {
-                    const data = await response.json();
-                    rsvpResponses = data.responses || [];
-                    renderRSVPTable();
-                } else {
-                    console.log('No RSVP responses found');
-                    rsvpResponses = [];
-                    renderRSVPTable();
-                }
-            } catch (error) {
-                console.error('Error loading RSVP responses:', error);
-                rsvpResponses = [];
-                renderRSVPTable();
-            }
+            // Show event selection view
+            showEventSelection();
         }
 
         // Render RSVP table (individual responses)
@@ -1588,7 +1603,7 @@
             tbody.innerHTML = '';
 
             if (rsvpResponses.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #666;">No RSVP responses found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">No RSVP responses found</td></tr>';
                 return;
             }
 
@@ -1596,9 +1611,7 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${rsvp.id}</td>
-                    <td>${rsvp.event_name || 'Event ID: ' + rsvp.event_id}</td>
                     <td>${rsvp.family_name}</td>
-                    <td><span class="badge badge-${rsvp.attendance.toLowerCase()}">${rsvp.attendance}</span></td>
                     <td>${rsvp.members_count || 'N/A'}</td>
                     <td>${rsvp.food_preference || 'N/A'}</td>
                     <td>${rsvp.message || 'N/A'}</td>
@@ -1608,34 +1621,156 @@
             });
         }
 
-        // Load user-specific RSVP responses (individual responses only)
+        // Load user-specific RSVP responses - show event selection first
         async function loadUserRSVPResponses() {
-            try {
-                const userId = getCurrentUserId();
-                const response = await fetch(`/api/admin/rsvp-responses?user_id=${userId}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    rsvpResponses = data.responses || [];
-                    
-                    // Calculate and update summary stats from the actual response data
-                    updateSummaryStatsFromResponses(rsvpResponses);
-                    
-                    renderRSVPTable();
-                } else {
-                    console.log('No RSVP responses found for user');
-                    rsvpResponses = [];
-                    updateSummaryStatsFromResponses([]);
-                    renderRSVPTable();
-                }
-            } catch (error) {
-                console.error('Error loading user RSVP responses:', error);
-                rsvpResponses = [];
-                updateSummaryStatsFromResponses([]);
-                renderRSVPTable();
-            }
+            // Show event selection view
+            showEventSelection();
         }
         
         // Load RSVP analytics using count.py
+// Show event selection interface
+        async function showEventSelection() {
+            // Hide RSVP responses view and show event selection
+            document.getElementById('eventSelectionView').style.display = 'block';
+            document.getElementById('rsvpResponsesView').style.display = 'none';
+            
+            // Load and display events as cards
+            await loadEventsForSelection();
+        }
+
+        // Load events for selection cards
+        async function loadEventsForSelection() {
+            try {
+                let eventsUrl = '/api/admin/events';
+                if (!isAdmin()) {
+                    const userId = getCurrentUserId();
+                    eventsUrl += `?user_id=${userId}`;
+                }
+                
+                const response = await fetch(eventsUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    userEvents = data.events || [];
+                    renderEventCards();
+                } else {
+                    console.log('No events found');
+                    userEvents = [];
+                    renderEventCards();
+                }
+            } catch (error) {
+                console.error('Error loading events:', error);
+                userEvents = [];
+                renderEventCards();
+            }
+        }
+
+        // Render event selection cards
+        function renderEventCards() {
+            const container = document.getElementById('eventCardsContainer');
+            container.innerHTML = '';
+            
+            if (userEvents.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">
+                        <i class="fas fa-calendar-times" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
+                        <p style="font-size: 18px; margin: 0;">No events found</p>
+                        <p style="font-size: 14px; margin: 10px 0 0 0;">Create an event first to view RSVP responses.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            userEvents.forEach((event, index) => {
+                const eventCard = document.createElement('div');
+                eventCard.style.cssText = `
+                    background: white;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                    padding: 25px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    text-align: center;
+                    border: 2px solid transparent;
+                `;
+                
+                eventCard.onclick = () => selectEvent(event.id, `${event.bride_name} & ${event.groom_name}`);
+                
+                // Add hover effect
+                eventCard.onmouseover = () => {
+                    eventCard.style.transform = 'translateY(-5px)';
+                    eventCard.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+                    eventCard.style.borderColor = '#667eea';
+                };
+                eventCard.onmouseout = () => {
+                    eventCard.style.transform = 'translateY(0)';
+                    eventCard.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+                    eventCard.style.borderColor = 'transparent';
+                };
+                
+                const eventDate = new Date(event.wedding_date);
+                const daysUntil = Math.ceil((eventDate - new Date()) / (1000 * 60 * 60 * 24));
+                
+                eventCard.innerHTML = `
+                    <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 20px;">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h3 style="margin: 0 0 10px 0; color: #333; font-size: 16px; font-weight: 600;">
+                        ${event.bride_name} & ${event.groom_name}
+                    </h3>
+                    <p style="margin: 5px 0; color: #666; font-size: 13px;">
+                        <i class="fas fa-calendar"></i> ${eventDate.toLocaleDateString()}
+                    </p>
+                    <p style="margin: 5px 0; color: #666; font-size: 13px;">
+                        <i class="fas fa-map-marker-alt"></i> ${event.location}
+                    </p>
+                    <div style="margin-top: 15px; padding: 6px 12px; background: ${daysUntil <= 0 ? 'rgba(220, 53, 69, 0.1)' : 'rgba(102, 126, 234, 0.1)'}; border-radius: 15px; color: ${daysUntil <= 0 ? '#dc3545' : '#667eea'}; font-weight: 600; font-size: 11px;">
+                        ${daysUntil <= 0 ? 'Past Event' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil} days to go`}
+                    </div>
+                `;
+                container.appendChild(eventCard);
+            });
+        }
+
+        // Select an event and show its RSVP responses
+        async function selectEvent(eventId, eventName) {
+            try {
+                // Load RSVP responses for the selected event
+                let rsvpUrl = '/api/admin/rsvp-responses';
+                if (!isAdmin()) {
+                    const userId = getCurrentUserId();
+                    rsvpUrl += `?user_id=${userId}`;
+                }
+                
+                const response = await fetch(rsvpUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    allRSVPResponses = data.responses || [];
+                    
+                    // Filter responses for selected event
+                    rsvpResponses = allRSVPResponses.filter(r => r.event_id == eventId);
+                    
+                    // Update UI
+                    document.getElementById('selectedEventTitle').textContent = `RSVP Responses - ${eventName}`;
+                    document.getElementById('eventSelectionView').style.display = 'none';
+                    document.getElementById('rsvpResponsesView').style.display = 'block';
+                    
+                    // Update statistics and render table
+                    updateSummaryStatsFromResponses(rsvpResponses);
+                    renderRSVPTable();
+                } else {
+                    showAlert('rsvpAlert', 'Failed to load RSVP responses', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading RSVP responses for event:', error);
+                showAlert('rsvpAlert', 'Error loading RSVP responses', 'error');
+            }
+        }
+
+        // Go back to event selection
+        function backToEventSelection() {
+            document.getElementById('eventSelectionView').style.display = 'block';
+            document.getElementById('rsvpResponsesView').style.display = 'none';
+        }
         async function loadRSVPAnalytics(userId) {
             try {
                 // Get analytics for user's events
@@ -1820,6 +1955,68 @@
             document.getElementById('predictedAttendees').textContent = predictedAttendees;
             document.getElementById('predictedVegCount').textContent = vegCount;
             document.getElementById('predictedNonVegCount').textContent = nonVegCount;
+        }
+
+        // Global variables for event filtering
+        let allRSVPResponses = [];
+        let userEvents = [];
+
+        // Load events for the filter dropdown
+        async function loadEventsForFilter() {
+            try {
+                let eventsUrl = '/api/admin/events';
+                if (!isAdmin()) {
+                    const userId = getCurrentUserId();
+                    eventsUrl += `?user_id=${userId}`;
+                }
+                
+                const response = await fetch(eventsUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    userEvents = data.events || [];
+                    populateEventFilter();
+                } else {
+                    console.log('No events found for filter');
+                    userEvents = [];
+                    populateEventFilter();
+                }
+            } catch (error) {
+                console.error('Error loading events for filter:', error);
+                userEvents = [];
+                populateEventFilter();
+            }
+        }
+
+        // Populate the event filter dropdown
+        function populateEventFilter() {
+            const eventFilter = document.getElementById('eventFilter');
+            eventFilter.innerHTML = '<option value="">All Events</option>';
+            
+            userEvents.forEach(event => {
+                const option = document.createElement('option');
+                option.value = event.id;
+                option.textContent = `${event.bride_name} & ${event.groom_name} (${event.wedding_date})`;
+                eventFilter.appendChild(option);
+            });
+        }
+
+        // Filter RSVP responses by selected event
+        function filterRSVPByEvent() {
+            const selectedEventId = document.getElementById('eventFilter').value;
+            
+            if (selectedEventId === '') {
+                // Show all responses
+                rsvpResponses = allRSVPResponses;
+            } else {
+                // Filter responses for selected event
+                rsvpResponses = allRSVPResponses.filter(response =>
+                    response.event_id == selectedEventId
+                );
+            }
+            
+            // Update display
+            updateSummaryStatsFromResponses(rsvpResponses);
+            renderRSVPTable();
         }
 
         // Download RSVP data in CSV or PDF format
