@@ -286,6 +286,66 @@ async def invitation_page():
     return FileResponse(Path("invitation.html"), media_type="text/html")
 
 # Authentication endpoints
+@app.post("/api/login")
+async def unified_login(user_login: UserLogin, db: Session = Depends(get_db)):
+    """
+    Unified login endpoint that handles both admin and user authentication
+    """
+    # First try to authenticate as admin
+    admin = authenticate_admin(db, user_login.email, user_login.password)
+    if admin:
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": admin.email, "type": "admin", "user_id": admin.id},
+            expires_delta=access_token_expires
+        )
+        
+        return {
+            "success": True,
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": admin.id,
+                "name": admin.name,
+                "email": admin.email,
+                "role": "admin",
+                "wedding_date": None,
+                "user_type": "admin"
+            },
+            "redirect_to": "dashboard"
+        }
+    
+    # If not admin, try to authenticate as regular user
+    user = authenticate_user(db, user_login.email, user_login.password)
+    if user:
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.email, "type": "user", "user_id": user.id},
+            expires_delta=access_token_expires
+        )
+        
+        return {
+            "success": True,
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "role": user.role,
+                "wedding_date": user.wedding_date,
+                "user_type": "user"
+            },
+            "redirect_to": "dashboard"
+        }
+    
+    # If neither admin nor user authentication succeeded
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid email or password"
+    )
+
+# Keep the original endpoints for backward compatibility
 @app.post("/api/user/login")
 async def login_user(user_login: UserLogin, db: Session = Depends(get_db)):
     user = authenticate_user(db, user_login.email, user_login.password)

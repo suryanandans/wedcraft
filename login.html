@@ -44,36 +44,6 @@
             letter-spacing: 1px;
         }
 
-        .login-tabs {
-            display: flex;
-            margin-bottom: 30px;
-            border-radius: 12px;
-            overflow: hidden;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .tab-button {
-            flex: 1;
-            padding: 15px;
-            background: transparent;
-            border: none;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .tab-button.active {
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-            font-weight: 600;
-        }
-
-        .tab-button:hover {
-            background: rgba(255, 255, 255, 0.15);
-            color: #fff;
-        }
 
         .input-group {
             margin-bottom: 20px;
@@ -151,45 +121,6 @@
             font-weight: 500;
         }
 
-        .user-creation-section {
-            display: none;
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .section-title {
-            color: #fff;
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .admin-controls {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-            justify-content: center;
-        }
-
-        .control-btn {
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
-            color: #fff;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.3s ease;
-        }
-
-        .control-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-1px);
-        }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
@@ -232,117 +163,42 @@
         <div class="form-wrapper">
             <h2>🔐 Login to WedCraft</h2>
             
-            <!-- Login Type Tabs -->
-            <div class="login-tabs">
-                <button class="tab-button active" id="userTab" onclick="switchTab('user')">User Login</button>
-                <button class="tab-button" id="adminTab" onclick="switchTab('admin')">Admin Login</button>
-            </div>
-            
             <div class="success-message" id="successMessage"></div>
             <div class="error-message" id="errorMessage"></div>
             
-            <!-- Login Form -->
+            <!-- Unified Login Form -->
             <form id="loginForm">
                 <div class="input-group">
-                    <label id="emailLabel">Email</label>
+                    <label>Email</label>
                     <input type="email" id="email" placeholder="Enter your email" required />
                 </div>
 
                 <div class="input-group">
-                    <label id="passwordLabel">Password</label>
+                    <label>Password</label>
                     <input type="password" id="password" placeholder="Enter your password" required />
                 </div>
 
-                <button type="submit" class="login-btn" id="loginBtn">Login</button>
+                <button type="submit" class="login-btn">Login</button>
             </form>
 
-            <!-- Admin User Creation Section (Hidden initially) -->
-            <div class="user-creation-section" id="userCreationSection">
-                <div class="section-title">👥 Create New User</div>
-                
-                <div class="success-message" id="userSuccessMessage"></div>
-                <div class="error-message" id="userErrorMessage"></div>
-                
-                <form id="createUserForm">
-                    <div class="input-group">
-                        <label>Full Name</label>
-                        <input type="text" id="userName" placeholder="Enter user's full name" required />
-                    </div>
-
-                    <div class="input-group">
-                        <label>Email</label>
-                        <input type="email" id="userEmail" placeholder="Enter user's email" required />
-                    </div>
-
-                    <div class="input-group">
-                        <label>Password</label>
-                        <input type="password" id="userPassword" placeholder="Create password for user" required />
-                    </div>
-
-                    <div class="input-group">
-                        <label>User Role</label>
-                        <select id="userRole" required>
-                            <option value="">Select user role</option>
-                            <option value="user">User</option>
-                        </select>
-                    </div>
-
-                    <div class="input-group">
-                        <label>Wedding Date (Optional)</label>
-                        <input type="date" id="weddingDate" />
-                    </div>
-
-                    <button type="submit" class="login-btn">Create User Account</button>
-                </form>
-
-                <div class="admin-controls">
-                    <a href="dashboard.html" class="control-btn">📊 Dashboard</a>
-                    <button class="control-btn" onclick="logout()">🚪 Logout</button>
-                </div>
-            </div>
         </div>
     </div>
 
     <script>
-        let currentLoginType = 'user';
-
-        // Switch between user and admin login tabs
-        function switchTab(type) {
-            currentLoginType = type;
-            
-            // Update tab appearance
-            document.getElementById('userTab').classList.toggle('active', type === 'user');
-            document.getElementById('adminTab').classList.toggle('active', type === 'admin');
-            
-            // Update form labels and placeholders
-            if (type === 'admin') {
-                document.getElementById('emailLabel').textContent = 'Admin Email';
-                document.getElementById('passwordLabel').textContent = 'Admin Password';
-                document.getElementById('email').placeholder = 'Enter admin email';
-                document.getElementById('password').placeholder = 'Enter admin password';
-                document.getElementById('loginBtn').textContent = 'Login as Admin';
-            } else {
-                document.getElementById('emailLabel').textContent = 'Email';
-                document.getElementById('passwordLabel').textContent = 'Password';
-                document.getElementById('email').placeholder = 'Enter your email';
-                document.getElementById('password').placeholder = 'Enter your password';
-                document.getElementById('loginBtn').textContent = 'Login';
-            }
-            
-            // Clear messages and form
-            clearMessages();
-            document.getElementById('loginForm').reset();
-        }
-
         // Clear all messages
         function clearMessages() {
-            document.getElementById('successMessage').style.display = 'none';
-            document.getElementById('errorMessage').style.display = 'none';
-            document.getElementById('userSuccessMessage').style.display = 'none';
-            document.getElementById('userErrorMessage').style.display = 'none';
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const userSuccessMessage = document.getElementById('userSuccessMessage');
+            const userErrorMessage = document.getElementById('userErrorMessage');
+            
+            if (successMessage) successMessage.style.display = 'none';
+            if (errorMessage) errorMessage.style.display = 'none';
+            if (userSuccessMessage) userSuccessMessage.style.display = 'none';
+            if (userErrorMessage) userErrorMessage.style.display = 'none';
         }
 
-        // Login Form Handler
+        // Unified Login Form Handler
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -352,9 +208,8 @@
             clearMessages();
             
             try {
-                let endpoint = currentLoginType === 'admin' ? '/api/admin/login' : '/api/user/login';
-                
-                const response = await fetch(endpoint, {
+                // Use the unified login endpoint
+                const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -365,34 +220,33 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    if (currentLoginType === 'admin') {
-                        document.getElementById('successMessage').textContent = 'Admin login successful! Redirecting to dashboard...';
-                        document.getElementById('successMessage').style.display = 'block';
-                        
-                        // Store admin session data for dashboard (using sessionStorage for tab isolation)
+                    const userType = result.user.user_type;
+                    const userName = result.user.name;
+                    
+                    document.getElementById('successMessage').textContent =
+                        `Welcome ${userName}! Redirecting to ${userType} dashboard...`;
+                    document.getElementById('successMessage').style.display = 'block';
+                    
+                    // Store session data based on user type
+                    if (userType === 'admin') {
                         sessionStorage.setItem('adminLoggedIn', 'true');
-                        sessionStorage.setItem('adminData', JSON.stringify(result.admin));
+                        sessionStorage.setItem('adminData', JSON.stringify(result.user));
                         sessionStorage.setItem('adminEmail', email);
                         sessionStorage.setItem('userType', 'admin');
-                        
-                        // Redirect to dashboard
-                        setTimeout(() => {
-                            window.location.href = 'dashboard.html';
-                        }, 2000);
                     } else {
-                        document.getElementById('successMessage').textContent = 'Login successful! Redirecting to dashboard...';
-                        document.getElementById('successMessage').style.display = 'block';
-                        
-                        // Store user session (using sessionStorage for tab isolation)
                         sessionStorage.setItem('userLoggedIn', 'true');
                         sessionStorage.setItem('userData', JSON.stringify(result.user));
                         sessionStorage.setItem('userType', 'user');
-                        
-                        // All users redirect to dashboard.html
-                        setTimeout(() => {
-                            window.location.href = 'dashboard.html';
-                        }, 2000);
                     }
+                    
+                    // Store common session data
+                    sessionStorage.setItem('accessToken', result.access_token);
+                    sessionStorage.setItem('currentUser', JSON.stringify(result.user));
+                    
+                    // Redirect to dashboard after a short delay
+                    setTimeout(() => {
+                        window.location.href = result.redirect_to + '.html';
+                    }, 1500);
                 } else {
                     document.getElementById('errorMessage').textContent = result.detail || 'Invalid credentials. Please try again.';
                     document.getElementById('errorMessage').style.display = 'block';
@@ -404,81 +258,27 @@
             }
         });
 
-        // Create User Form Handler
-        document.getElementById('createUserForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            // Check if admin is logged in
-            if (!sessionStorage.getItem('adminLoggedIn')) {
-                document.getElementById('userErrorMessage').textContent = 'Please login as admin first to create users.';
-                document.getElementById('userErrorMessage').style.display = 'block';
-                return;
-            }
-            
-            const userData = {
-                name: document.getElementById('userName').value,
-                email: document.getElementById('userEmail').value,
-                password: document.getElementById('userPassword').value,
-                role: document.getElementById('userRole').value,
-                weddingDate: document.getElementById('weddingDate').value || null
-            };
-            
-            // Clear previous messages
-            document.getElementById('userSuccessMessage').style.display = 'none';
-            document.getElementById('userErrorMessage').style.display = 'none';
-            
-            try {
-                const response = await fetch('/api/admin/create-user', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(userData)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    document.getElementById('userSuccessMessage').textContent = `User account created successfully for ${userData.name}!`;
-                    document.getElementById('userSuccessMessage').style.display = 'block';
-                    
-                    // Reset form
-                    document.getElementById('createUserForm').reset();
-                } else {
-                    document.getElementById('userErrorMessage').textContent = result.detail || 'Failed to create user account. Please try again.';
-                    document.getElementById('userErrorMessage').style.display = 'block';
-                }
-                
-            } catch (error) {
-                console.error('User creation error:', error);
-                document.getElementById('userErrorMessage').textContent = 'Failed to create user account. Please try again.';
-                document.getElementById('userErrorMessage').style.display = 'block';
-            }
-        });
-
         // Logout function
         function logout() {
-            sessionStorage.removeItem('adminLoggedIn');
-            sessionStorage.removeItem('adminEmail');
-            sessionStorage.removeItem('userLoggedIn');
-            sessionStorage.removeItem('userData');
-            sessionStorage.removeItem('adminData');
-            sessionStorage.removeItem('userType');
-            
-            // Hide user creation section
-            document.getElementById('userCreationSection').style.display = 'none';
-            
-            // Reset to user login tab
-            switchTab('user');
+            // Clear all session storage
+            sessionStorage.clear();
             
             // Clear all forms and messages
             document.getElementById('loginForm').reset();
-            document.getElementById('createUserForm').reset();
             clearMessages();
+            
+            // Show success message
+            document.getElementById('successMessage').textContent = 'Logged out successfully!';
+            document.getElementById('successMessage').style.display = 'block';
+            
+            // Hide success message after 2 seconds
+            setTimeout(() => {
+                document.getElementById('successMessage').style.display = 'none';
+            }, 2000);
         }
 
-        // Check if user is already logged in
-        if (sessionStorage.getItem('adminLoggedIn') || sessionStorage.getItem('userLoggedIn')) {
+        // Check if user is already logged in and redirect to dashboard
+        if (sessionStorage.getItem('adminLoggedIn') || sessionStorage.getItem('userLoggedIn') || sessionStorage.getItem('currentUser')) {
             // Add a small delay to prevent flickering and redirect to dashboard
             setTimeout(() => {
                 window.location.href = 'dashboard.html';

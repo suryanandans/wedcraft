@@ -930,8 +930,7 @@
                         <tr>
                             <th>ID</th>
                             <th>User</th>
-                            <th>Couple Names</th>
-                            <th>Wedding Date</th>
+                            <th>Event Date</th>
                             <th>Location</th>
                             <th>Created</th>
                             <th>Actions</th>
@@ -1124,17 +1123,6 @@
                     <label class="form-label">Password</label>
                     <input type="password" class="form-input" id="userPassword" required>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Role</label>
-                    <select class="form-select" id="userRole" required>
-                        <option value="">Select Role</option>
-                        <option value="user">User</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Wedding Date (Optional)</label>
-                    <input type="date" class="form-input" id="userWeddingDate">
-                </div>
                 <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px;">
                     <button type="button" class="btn btn-secondary" onclick="closeCreateUserModal()">Cancel</button>
                     <button type="submit" class="btn btn-primary">
@@ -1286,22 +1274,53 @@
 
         // Check authentication
         function checkAuth() {
-            const adminLoggedIn = sessionStorage.getItem('adminLoggedIn');
-            const userLoggedIn = sessionStorage.getItem('userLoggedIn');
+            const currentUser = sessionStorage.getItem('currentUser');
             const userType = sessionStorage.getItem('userType');
+            const accessToken = sessionStorage.getItem('accessToken');
             
-            // Check if user is logged in
-            if (!adminLoggedIn && !userLoggedIn) {
-                window.location.href = 'login.html';
-                return;
+            // Check if user is logged in with the new unified system
+            if (!currentUser || !userType || !accessToken) {
+                // Fallback to old system for backward compatibility
+                const adminLoggedIn = sessionStorage.getItem('adminLoggedIn');
+                const userLoggedIn = sessionStorage.getItem('userLoggedIn');
+                
+                if (!adminLoggedIn && !userLoggedIn) {
+                    window.location.href = 'login.html';
+                    return;
+                }
             }
             
             // Update UI based on user type
             updateUIForUserType(userType);
+            
+            // Update user avatar with first letter of name
+            updateUserAvatar();
+        }
+        
+        // Update user avatar
+        function updateUserAvatar() {
+            const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+            const adminData = JSON.parse(sessionStorage.getItem('adminData') || '{}');
+            const userData = JSON.parse(sessionStorage.getItem('userData') || '{}');
+            
+            const user = currentUser.name ? currentUser : (adminData.name ? adminData : userData);
+            const userAvatar = document.getElementById('userAvatar');
+            
+            if (user.name && userAvatar) {
+                userAvatar.innerHTML = user.name.charAt(0).toUpperCase();
+                userAvatar.title = user.name;
+            }
         }
         
         // Get current user ID
         function getCurrentUserId() {
+            // Try new unified system first
+            const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+            if (currentUser.id) {
+                return currentUser.id;
+            }
+            
+            // Fallback to old system
             const userType = sessionStorage.getItem('userType');
             if (userType === 'admin') {
                 const adminData = JSON.parse(sessionStorage.getItem('adminData') || '{}');
@@ -2066,7 +2085,7 @@
             tbody.innerHTML = '';
 
             if (eventsToRender.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">No events found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">No events found</td></tr>';
                 return;
             }
 
@@ -2081,7 +2100,6 @@
                 row.innerHTML = `
                     <td>${event.id}</td>
                     <td>${userInfo}</td>
-                    <td>${getEventDisplayName(event)}</td>
                     <td>${event.wedding_date}</td>
                     <td>${event.location}</td>
                     <td>${new Date(event.created_at).toLocaleDateString()}</td>
@@ -2992,8 +3010,8 @@
                 name: document.getElementById('userName').value,
                 email: document.getElementById('userEmail').value,
                 password: document.getElementById('userPassword').value,
-                role: document.getElementById('userRole').value,
-                wedding_date: document.getElementById('userWeddingDate').value || null
+                role: 'user', // Default role for all created users
+                wedding_date: null // No wedding date field
             };
 
             try {
@@ -3435,12 +3453,8 @@
         // Logout
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
-                sessionStorage.removeItem('adminData');
-                sessionStorage.removeItem('adminLoggedIn');
-                sessionStorage.removeItem('userData');
-                sessionStorage.removeItem('userLoggedIn');
-                sessionStorage.removeItem('userType');
-                sessionStorage.removeItem('adminEmail');
+                // Clear all session storage for unified login system
+                sessionStorage.clear();
                 window.location.href = 'login.html';
             }
         }
