@@ -291,10 +291,6 @@
                                     <input type="radio" name="attendance" value="Yes" id="attendYes" style="display: none;">
                                     <div>✅ Yes, we'll be there!</div>
                                 </div>
-                                <div onclick="selectAttendance('No')" style="flex: 1; padding: 15px; border: 2px solid #e1e5e9; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.3s ease; background: white;" class="attendance-option">
-                                    <input type="radio" name="attendance" value="No" id="attendNo" style="display: none;">
-                                    <div>❌ Sorry, can't make it</div>
-                                </div>
                                 <div onclick="selectAttendance('Maybe')" style="flex: 1; padding: 15px; border: 2px solid #e1e5e9; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.3s ease; background: white;" class="attendance-option">
                                     <input type="radio" name="attendance" value="Maybe" id="attendMaybe" style="display: none;">
                                     <div>🤔 Not sure yet</div>
@@ -571,7 +567,7 @@
             
             // Show/hide family members section
             const familySection = document.getElementById('familyMembersSection');
-            if (attendance === 'Yes') {
+            if (attendance === 'Yes' || attendance === 'Maybe') {
                 familySection.style.display = 'block';
                 generateMemberFields();
             } else {
@@ -659,7 +655,7 @@
             
             let familyMembers = [];
             
-            if (selectedAttendance === 'Yes') {
+            if (selectedAttendance === 'Yes' || selectedAttendance === 'Maybe') {
                 const memberCount = parseInt(document.getElementById('memberCount').value) || 1;
                 
                 for (let i = 1; i <= memberCount; i++) {

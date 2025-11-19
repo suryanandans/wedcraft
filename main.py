@@ -894,7 +894,7 @@ async def submit_standard_rsvp(rsvp: StandardRSVPSubmission, db: Session = Depen
     """
     
     # Validate attendance value
-    valid_attendance = ['Yes', 'No', 'Maybe']
+    valid_attendance = ['Yes', 'Maybe']
     if rsvp.attendance not in valid_attendance:
         raise HTTPException(
             status_code=400,
@@ -976,19 +976,19 @@ async def submit_enhanced_rsvp(rsvp: EnhancedRSVPSubmission, db: Session = Depen
     """
     
     # Validate attendance value
-    valid_attendance = ['Yes', 'No', 'Maybe']
+    valid_attendance = ['Yes', 'Maybe']
     if rsvp.attendance not in valid_attendance:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid attendance value. Must be one of: {', '.join(valid_attendance)}"
         )
     
-    # Validate required fields for 'Yes' attendance
-    if rsvp.attendance == 'Yes':
+    # Validate required fields for 'Yes' and 'Maybe' attendance
+    if rsvp.attendance == 'Yes' or rsvp.attendance == 'Maybe':
         if not rsvp.family_members or len(rsvp.family_members) == 0:
             raise HTTPException(
                 status_code=400,
-                detail="Family members details are required when attendance is 'Yes'"
+                detail="Family members details are required when attendance is 'Yes' or 'Maybe'"
             )
         
         # Validate each family member
@@ -1029,7 +1029,7 @@ async def submit_enhanced_rsvp(rsvp: EnhancedRSVPSubmission, db: Session = Depen
         
         # Calculate overall food preference summary for backward compatibility
         food_preference_summary = None
-        if rsvp.attendance == 'Yes' and rsvp.family_members:
+        if (rsvp.attendance == 'Yes' or rsvp.attendance == 'Maybe') and rsvp.family_members:
             veg_count = sum(1 for member in rsvp.family_members if member.food_preference == 'Vegetarian')
             nonveg_count = len(rsvp.family_members) - veg_count
             
@@ -1044,8 +1044,8 @@ async def submit_enhanced_rsvp(rsvp: EnhancedRSVPSubmission, db: Session = Depen
             event_id=rsvp.event_id,
             family_name=rsvp.family_name.strip(),
             attendance=rsvp.attendance,
-            members_count=members_count if rsvp.attendance == 'Yes' else None,
-            food_preference=food_preference_summary if rsvp.attendance == 'Yes' else None
+            members_count=members_count if (rsvp.attendance == 'Yes' or rsvp.attendance == 'Maybe') else None,
+            food_preference=food_preference_summary if (rsvp.attendance == 'Yes' or rsvp.attendance == 'Maybe') else None
         )
         
         db.add(db_rsvp)
@@ -1053,7 +1053,7 @@ async def submit_enhanced_rsvp(rsvp: EnhancedRSVPSubmission, db: Session = Depen
         
         # Create individual family member records
         family_members_data = []
-        if rsvp.attendance == 'Yes' and rsvp.family_members:
+        if (rsvp.attendance == 'Yes' or rsvp.attendance == 'Maybe') and rsvp.family_members:
             for member in rsvp.family_members:
                 db_member = FamilyMember(
                     rsvp_response_id=db_rsvp.id,
