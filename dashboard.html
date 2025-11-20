@@ -541,42 +541,81 @@
         }
 
         .stat-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(250, 248, 243, 0.9));
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(250, 248, 243, 0.95));
             backdrop-filter: blur(20px);
-            border-radius: 16px;
-            padding: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
+            border-radius: 20px;
+            padding: 35px 30px;
+            border: 2px solid rgba(212, 175, 55, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(212, 175, 55, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #d4af37, #b8860b, #d4af37);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
         }
 
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(212, 175, 55, 0.2);
+            border-color: rgba(212, 175, 55, 0.3);
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
         }
 
         .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 36px;
             color: white;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover .stat-icon {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-icon img {
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover .stat-icon img {
+            transform: scale(1.15);
         }
 
         .stat-number {
-            font-size: 32px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 5px;
+            font-size: 42px;
+            font-weight: 800;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+            letter-spacing: -1px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .stat-label {
-            color: #666;
-            font-weight: 500;
+            color: #555;
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
 
         /* Responsive Design */
@@ -739,29 +778,29 @@
             
             <div class="stats-grid" id="adminStatsGrid">
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #d4af37, #b8860b);">
-                        <i class="fas fa-users"></i>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #d4af37, #b8860b); display: flex; align-items: center; justify-content: center;">
+                        <img src="assets/icon-images/total-users.png" alt="Total Users" style="width: 56px; height: 56px; object-fit: contain;">
                     </div>
                     <div class="stat-number" id="totalUsers">0</div>
                     <div class="stat-label">Total Users</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #ff6b9d, #c44569);">
-                        <i class="fas fa-heart"></i>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #ff6b9d, #c44569); display: flex; align-items: center; justify-content: center;">
+                        <img src="assets/icon-images/total-events.png" alt="Total Events" style="width: 56px; height: 56px; object-fit: contain;">
                     </div>
                     <div class="stat-number" id="totalEvents">0</div>
                     <div class="stat-label">Total Events</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #5f9ea0, #4682b4);">
-                        <i class="fas fa-envelope"></i>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #5f9ea0, #4682b4); display: flex; align-items: center; justify-content: center;">
+                        <img src="assets/icon-images/active-forms.png" alt="Active Forms" style="width: 56px; height: 56px; object-fit: contain;">
                     </div>
                     <div class="stat-number" id="totalRSVPs">0</div>
                     <div class="stat-label">Active Forms</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #90c695, #6ba368);">
-                        <i class="fas fa-check-circle"></i>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #90c695, #6ba368); display: flex; align-items: center; justify-content: center;">
+                        <img src="assets/icon-images/active-events.png" alt="Active Events" style="width: 56px; height: 56px; object-fit: contain;">
                     </div>
                     <div class="stat-number" id="activeEvents">0</div>
                     <div class="stat-label">Active Events</div>
@@ -1089,34 +1128,93 @@
                 </div>
                 
                 <!-- RSVP Summary Statistics -->
-                <div class="stats-grid" style="margin-bottom: 30px;">
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #d4af37, #b8860b);">
-                            <i class="fas fa-users"></i>
+                <!-- Actual Values Section -->
+                <div style="margin-bottom: 15px;">
+                    <h3 style="color: #333; font-size: 18px; font-weight: 600; margin-bottom: 15px; padding-left: 5px;">
+                        <i class="fas fa-check-circle" style="color: #4caf50; margin-right: 8px;"></i>
+                        Actual Values
+                    </h3>
+                    <div class="stats-grid" style="margin-bottom: 20px;">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #4caf50, #45a049);">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-number" id="totalFamiliesRegistered">0</div>
+                            <div class="stat-label">Families Registered</div>
                         </div>
-                        <div class="stat-number" id="totalFamiliesRegistered">0</div>
-                        <div class="stat-label">Families Registered</div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #4caf50, #45a049);">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="stat-number" id="actualAttendees">0</div>
+                            <div class="stat-label">Confirmed Attendees</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #4caf50, #45a049);">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-number" id="totalAttendeesWithMaybe">0</div>
+                            <div class="stat-label">Total Attendees</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #4caf50, #45a049);">
+                                <i class="fas fa-question-circle"></i>
+                            </div>
+                            <div class="stat-number" id="actualMaybeCount">0</div>
+                            <div class="stat-label">Maybe Responses</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #4caf50, #45a049);">
+                                <i class="fas fa-leaf"></i>
+                            </div>
+                            <div class="stat-number" id="actualVegCount">0</div>
+                            <div class="stat-label">Vegetarian</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #4caf50, #45a049);">
+                                <i class="fas fa-drumstick-bite"></i>
+                            </div>
+                            <div class="stat-number" id="actualNonVegCount">0</div>
+                            <div class="stat-label">Non-Veg</div>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #90c695, #6ba368);">
-                            <i class="fas fa-user-check"></i>
+                </div>
+
+                <!-- Predicted Values Section -->
+                <div style="margin-bottom: 30px;">
+                    <h3 style="color: #333; font-size: 18px; font-weight: 600; margin-bottom: 15px; padding-left: 5px;">
+                        <i class="fas fa-brain" style="color: #667eea; margin-right: 8px;"></i>
+                         Predicted Values
+                    </h3>
+                    <div class="stats-grid" style="margin-bottom: 20px;">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="stat-number" id="totalFamiliesRegisteredPredicted">0</div>
+                            <div class="stat-label">Families Registered</div>
                         </div>
-                        <div class="stat-number" id="predictedAttendees">0</div>
-                        <div class="stat-label">Predicted Attendees</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #90c695, #6ba368);">
-                            <i class="fas fa-leaf"></i>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="stat-number" id="predictedAttendees">0</div>
+                            <div class="stat-label"> Attendees</div>
                         </div>
-                        <div class="stat-number" id="predictedVegCount">0</div>
-                        <div class="stat-label">Predicted Vegetarian</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #d2691e, #a0522d);">
-                            <i class="fas fa-drumstick-bite"></i>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                                <i class="fas fa-leaf"></i>
+                            </div>
+                            <div class="stat-number" id="predictedVegCount">0</div>
+                            <div class="stat-label"> Vegetarian</div>
                         </div>
-                        <div class="stat-number" id="predictedNonVegCount">0</div>
-                        <div class="stat-label">Predicted Non-Veg</div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                                <i class="fas fa-drumstick-bite"></i>
+                            </div>
+                            <div class="stat-number" id="predictedNonVegCount">0</div>
+                            <div class="stat-label"> Non-Veg</div>
+                        </div>
                     </div>
                 </div>
                 
@@ -2750,18 +2848,39 @@ function filterRSVPEvents() {
             const predictedVegCount = Math.round(predictedAttendees * vegRatio);
             const predictedNonVegCount = predictedAttendees - predictedVegCount;
             
-            // Update summary statistics with corrected count
+            // Calculate actual values
+            const actualAttendees = confirmedAttendees;
+            const actualMaybeCount = maybeAttendees;
+            const totalAttendeesWithMaybe = confirmedAttendees + maybeAttendees;
+            const actualVegCount = historicalVegCount;
+            const actualNonVegCount = historicalNonVegCount;
+            
+            // Update actual values
             document.getElementById('totalFamiliesRegistered').textContent = totalFamilies;
+            document.getElementById('actualAttendees').textContent = actualAttendees;
+            document.getElementById('totalAttendeesWithMaybe').textContent = totalAttendeesWithMaybe;
+            document.getElementById('actualMaybeCount').textContent = actualMaybeCount;
+            document.getElementById('actualVegCount').textContent = actualVegCount;
+            document.getElementById('actualNonVegCount').textContent = actualNonVegCount;
+            
+            // Update predicted values
+            document.getElementById('totalFamiliesRegisteredPredicted').textContent = totalFamilies;
             document.getElementById('predictedAttendees').textContent = predictedAttendees;
             document.getElementById('predictedVegCount').textContent = predictedVegCount;
             document.getElementById('predictedNonVegCount').textContent = predictedNonVegCount;
             
-            console.log(`RSVP Table Stats - Families: ${totalFamilies}, Yes: ${yesResponses.length}, Maybe: ${maybeResponses.length}`);
+            console.log(`RSVP Table Stats - Families: ${totalFamilies}, Actual: ${actualAttendees}, Maybe: ${actualMaybeCount}, Predicted: ${predictedAttendees}`);
 
             if (rsvpResponses.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">No RSVP responses found</td></tr>';
                 // Reset stats to 0
                 document.getElementById('totalFamiliesRegistered').textContent = '0';
+                document.getElementById('actualAttendees').textContent = '0';
+                document.getElementById('totalAttendeesWithMaybe').textContent = '0';
+                document.getElementById('actualMaybeCount').textContent = '0';
+                document.getElementById('actualVegCount').textContent = '0';
+                document.getElementById('actualNonVegCount').textContent = '0';
+                document.getElementById('totalFamiliesRegisteredPredicted').textContent = '0';
                 document.getElementById('predictedAttendees').textContent = '0';
                 document.getElementById('predictedVegCount').textContent = '0';
                 document.getElementById('predictedNonVegCount').textContent = '0';
@@ -2819,6 +2938,12 @@ function filterRSVPEvents() {
         function updateRSVPSummaryStats(analyticsData) {
             if (analyticsData.length === 0) {
                 document.getElementById('totalFamiliesRegistered').textContent = '0';
+                document.getElementById('actualAttendees').textContent = '0';
+                document.getElementById('totalAttendeesWithMaybe').textContent = '0';
+                document.getElementById('actualMaybeCount').textContent = '0';
+                document.getElementById('actualVegCount').textContent = '0';
+                document.getElementById('actualNonVegCount').textContent = '0';
+                document.getElementById('totalFamiliesRegisteredPredicted').textContent = '0';
                 document.getElementById('predictedAttendees').textContent = '0';
                 document.getElementById('predictedVegCount').textContent = '0';
                 document.getElementById('predictedNonVegCount').textContent = '0';
@@ -2827,6 +2952,9 @@ function filterRSVPEvents() {
 
             // Aggregate data from all events for this user
             const totalFamilies = analyticsData.reduce((sum, analytics) => sum + analytics.total_families, 0);
+            const totalActualAttendees = analyticsData.reduce((sum, analytics) => sum + analytics.yes_responses, 0);
+            const totalMaybeResponses = analyticsData.reduce((sum, analytics) => sum + analytics.maybe_responses, 0);
+            const totalAttendeesWithMaybe = totalActualAttendees + totalMaybeResponses;
             const totalPredictedAttendees = analyticsData.reduce((sum, analytics) => sum + analytics.predicted_attendance, 0);
             const totalVegRequired = analyticsData.reduce((sum, analytics) => sum + analytics.veg_required, 0);
             const totalNonVegRequired = analyticsData.reduce((sum, analytics) => sum + analytics.nonveg_required, 0);
@@ -2834,7 +2962,16 @@ function filterRSVPEvents() {
             // Update summary statistics
             console.log(`Processed Analytics: Total families from data: ${totalFamilies}`);
             
+            // Update actual values
             document.getElementById('totalFamiliesRegistered').textContent = totalFamilies;
+            document.getElementById('actualAttendees').textContent = totalActualAttendees;
+            document.getElementById('totalAttendeesWithMaybe').textContent = totalAttendeesWithMaybe;
+            document.getElementById('actualMaybeCount').textContent = totalMaybeResponses;
+            document.getElementById('actualVegCount').textContent = totalVegRequired;
+            document.getElementById('actualNonVegCount').textContent = totalNonVegRequired;
+            
+            // Update predicted values
+            document.getElementById('totalFamiliesRegisteredPredicted').textContent = totalFamilies;
             document.getElementById('predictedAttendees').textContent = totalPredictedAttendees;
             document.getElementById('predictedVegCount').textContent = totalVegRequired;
             document.getElementById('predictedNonVegCount').textContent = totalNonVegRequired;
@@ -2844,6 +2981,12 @@ function filterRSVPEvents() {
         function updateSummaryStatsFromResponses(rsvpResponses) {
             if (rsvpResponses.length === 0) {
                 document.getElementById('totalFamiliesRegistered').textContent = '0';
+                document.getElementById('actualAttendees').textContent = '0';
+                document.getElementById('totalAttendeesWithMaybe').textContent = '0';
+                document.getElementById('actualMaybeCount').textContent = '0';
+                document.getElementById('actualVegCount').textContent = '0';
+                document.getElementById('actualNonVegCount').textContent = '0';
+                document.getElementById('totalFamiliesRegisteredPredicted').textContent = '0';
                 document.getElementById('predictedAttendees').textContent = '0';
                 document.getElementById('predictedVegCount').textContent = '0';
                 document.getElementById('predictedNonVegCount').textContent = '0';
@@ -2886,12 +3029,33 @@ function filterRSVPEvents() {
                 }
             });
             
-            // Update summary statistics with corrected count
+            // Calculate predicted food preferences based on vegRatio
+            const totalHistorical = vegCount + nonVegCount;
+            let vegRatio = 0.6; // Default 60% vegetarian
+            if (totalHistorical > 0) {
+                vegRatio = vegCount / totalHistorical;
+            }
+            const predictedVegCount = Math.round(predictedAttendees * vegRatio);
+            const predictedNonVegCount = predictedAttendees - predictedVegCount;
+            
+            // Calculate total attendees with maybe
+            const totalAttendeesWithMaybe = confirmedAttendees + maybeAttendees;
+            
+            // Update actual values
             document.getElementById('totalFamiliesRegistered').textContent = totalFamilies;
-            console.log(`Detailed RSVP Stats - Families: ${totalFamilies}, Yes: ${yesResponses.length}, Maybe: ${maybeResponses.length}`);
+            document.getElementById('actualAttendees').textContent = confirmedAttendees;
+            document.getElementById('totalAttendeesWithMaybe').textContent = totalAttendeesWithMaybe;
+            document.getElementById('actualMaybeCount').textContent = maybeAttendees;
+            document.getElementById('actualVegCount').textContent = vegCount;
+            document.getElementById('actualNonVegCount').textContent = nonVegCount;
+            
+            // Update predicted values
+            document.getElementById('totalFamiliesRegisteredPredicted').textContent = totalFamilies;
             document.getElementById('predictedAttendees').textContent = predictedAttendees;
-            document.getElementById('predictedVegCount').textContent = vegCount;
-            document.getElementById('predictedNonVegCount').textContent = nonVegCount;
+            document.getElementById('predictedVegCount').textContent = predictedVegCount;
+            document.getElementById('predictedNonVegCount').textContent = predictedNonVegCount;
+            
+            console.log(`Detailed RSVP Stats - Families: ${totalFamilies}, Actual: ${confirmedAttendees}, Total: ${totalAttendeesWithMaybe}, Maybe: ${maybeAttendees}, Predicted: ${predictedAttendees}`);
         }
 
         // Global variables for event filtering

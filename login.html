@@ -9,12 +9,23 @@
             margin: 0;
             padding: 0;
             font-family: 'Poppins', sans-serif;
-            background: url('assets/images/registration-bg.png') no-repeat center center/cover;
+            background: url('assets/images/background.png') no-repeat center center/cover;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(4px);
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1;
         }
 
         .container {
@@ -23,6 +34,8 @@
             width: 90%;
             max-width: 500px;
             margin-top: 120px;
+            position: relative;
+            z-index: 2;
         }
 
         .form-wrapper {
@@ -145,7 +158,7 @@
     </style>
 </head>
 <body>
-    <nav style="position: fixed; top: 0; left: 0; width: 100%; padding: 22px 40px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.10); z-index: 10; box-sizing: border-box;">
+    <nav style="position: fixed; top: 0; left: 0; width: 100%; padding: 22px 40px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.10); z-index: 100; box-sizing: border-box;">
         <div style="display: flex; flex-direction: column; line-height: 1.1;">
             <h1 style="color: #fff; font-size: 26px; margin: 0; font-weight: 600;">WedCraft</h1>
             <span style="color: #fff; font-size: 13px; opacity: 0.85;">Wedding website builder</span>
