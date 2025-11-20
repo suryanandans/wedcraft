@@ -722,10 +722,7 @@
                         <i class="fas fa-user"></i>
                         Profile
                     </a>
-                    <a href="#" class="dropdown-item" onclick="showSettings()">
-                        <i class="fas fa-cog"></i>
-                        Settings
-                    </a>
+                    
                     <a href="#" class="dropdown-item" onclick="logout()">
                         <i class="fas fa-sign-out-alt"></i>
                         Logout
@@ -1574,7 +1571,7 @@
             
             if (userType === 'user') {
                 // Update titles for regular users
-                if (headerTitle) headerTitle.textContent = 'WedCraft Dashboard';
+                if (headerTitle) headerTitle.textContent = 'Event Manager ';
                 if (sidebarTitle) sidebarTitle.textContent = 'My Dashboard';
                 if (sidebarSubtitle) sidebarSubtitle.textContent = 'Manage your wedding';
                 
@@ -3252,17 +3249,30 @@ function filterRSVPEvents() {
 
         // Download RSVP data as CSV
         function downloadCSV(rsvpResponses) {
+            // Helper function to escape CSV values properly
+            function escapeCSV(value) {
+                if (value === null || value === undefined) {
+                    return '';
+                }
+                const stringValue = String(value);
+                // If the value contains comma, quote, or newline, wrap it in quotes and escape internal quotes
+                if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+                    return '"' + stringValue.replace(/"/g, '""') + '"';
+                }
+                return stringValue;
+            }
+
             const headers = ['ID', 'Event', 'Family Name', 'Attendance', 'Members Count', 'Food Preference', 'Message', 'Submitted Date'];
             const csvContent = [
                 headers.join(','),
                 ...rsvpResponses.map(rsvp => [
-                    rsvp.id,
-                    `"${rsvp.event_name || 'Event ID: ' + rsvp.event_id}"`,
-                    `"${rsvp.family_name}"`,
-                    rsvp.attendance,
+                    rsvp.id || '',
+                    escapeCSV(rsvp.event_name || `Event ID: ${rsvp.event_id}`),
+                    escapeCSV(rsvp.family_name || ''),
+                    escapeCSV(rsvp.attendance || ''),
                     rsvp.members_count || 0,
-                    `"${formatFoodPreferences(rsvp)}"`,
-                    `"${rsvp.message || 'N/A'}"`,
+                    escapeCSV(formatFoodPreferences(rsvp)),
+                    escapeCSV(rsvp.message || 'N/A'),
                     new Date(rsvp.created_at).toLocaleDateString()
                 ].join(','))
             ].join('\n');
@@ -3276,6 +3286,7 @@ function filterRSVPEvents() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
 
 
