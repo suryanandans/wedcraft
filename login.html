@@ -104,10 +104,32 @@
             transition: 0.3s ease;
         }
 
-        .login-btn:hover {
+        .login-btn:hover:not(:disabled) {
             background: linear-gradient(135deg, #e63d78, #ff4e8a);
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(255, 78, 138, 0.6);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .success-message {
@@ -140,6 +162,19 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        .typing-text {
+            color: #fff;
+            font-size: 20px;
+            font-weight: 500;
+            font-style: italic;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .typing-text span {
+            opacity: 0;
+        }
+
         @media (max-width: 768px) {
             .container {
                 width: 95%;
@@ -163,13 +198,7 @@
             <h1 style="color: #fff; font-size: 26px; margin: 0; font-weight: 600;">WedCraft</h1>
             <span style="color: #fff; font-size: 13px; opacity: 0.85;">Wedding website builder</span>
         </div>
-        <div style="display: flex; gap: 26px; align-items: center;">
-            <a href="welcome.html#features" style="color: #fff; text-decoration: none; font-size: 15px;">Features</a>
-            <a href="welcome.html#how" style="color: #fff; text-decoration: none; font-size: 15px;">How it works</a>
-            <a href="welcome.html#pricing" style="color: #fff; text-decoration: none; font-size: 15px;">Pricing</a>
-            <a href="welcome.html#contact" style="color: #fff; text-decoration: none; font-size: 15px;">Contact</a>
-            <a href="dashboard.html" style="padding: 10px 18px; background: rgba(255,255,255,0.22); color: #fff; border-radius: 8px; text-decoration: none; font-size: 14px;">Dashboard</a>
-        </div>
+        <div class="typing-text" id="typingText"></div>
     </nav>
 
     <div class="container">
@@ -191,13 +220,68 @@
                     <input type="password" id="password" placeholder="Enter your password" required />
                 </div>
 
-                <button type="submit" class="login-btn">Login</button>
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <span id="loginBtnText">Login</span>
+                </button>
             </form>
 
         </div>
     </div>
 
     <script>
+        // Typing animation for navigation text with infinite loop
+        function typeText() {
+            const text = "Plan - Execute - Celebrate";
+            const typingElement = document.getElementById('typingText');
+            const charDelay = 100; // milliseconds between each character
+            const pauseBeforeReset = 2000; // pause after full text appears
+            const fadeOutDuration = 500; // fade out duration
+            
+            let currentIndex = 0;
+            let spans = [];
+            
+            // Create spans for each character
+            text.split('').forEach((char) => {
+                const span = document.createElement('span');
+                span.textContent = char;
+                span.style.opacity = '0';
+                span.style.transition = 'opacity 0.1s';
+                typingElement.appendChild(span);
+                spans.push(span);
+            });
+            
+            function showNextChar() {
+                if (currentIndex < spans.length) {
+                    spans[currentIndex].style.opacity = '1';
+                    currentIndex++;
+                    setTimeout(showNextChar, charDelay);
+                } else {
+                    // All characters shown, wait then reset
+                    setTimeout(resetAnimation, pauseBeforeReset);
+                }
+            }
+            
+            function resetAnimation() {
+                // Fade out all characters
+                spans.forEach(span => {
+                    span.style.transition = `opacity ${fadeOutDuration}ms`;
+                    span.style.opacity = '0';
+                });
+                
+                // Reset and start again
+                setTimeout(() => {
+                    currentIndex = 0;
+                    showNextChar();
+                }, fadeOutDuration);
+            }
+            
+            // Start the animation
+            showNextChar();
+        }
+
+        // Initialize typing animation on page load
+        window.addEventListener('DOMContentLoaded', typeText);
+
         // Clear all messages
         function clearMessages() {
             const successMessage = document.getElementById('successMessage');
@@ -217,8 +301,14 @@
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
             
             clearMessages();
+            
+            // Show spinner and disable button
+            loginBtn.disabled = true;
+            loginBtnText.innerHTML = '<span class="spinner"></span>Logging in...';
             
             try {
                 // Use the unified login endpoint
@@ -235,10 +325,6 @@
                 if (result.success) {
                     const userType = result.user.user_type;
                     const userName = result.user.name;
-                    
-                    document.getElementById('successMessage').textContent =
-                        `Welcome ${userName}! Redirecting to ${userType} dashboard...`;
-                    document.getElementById('successMessage').style.display = 'block';
                     
                     // Store session data based on user type
                     if (userType === 'admin') {
@@ -263,11 +349,19 @@
                 } else {
                     document.getElementById('errorMessage').textContent = result.detail || 'Invalid credentials. Please try again.';
                     document.getElementById('errorMessage').style.display = 'block';
+                    
+                    // Re-enable button and restore text
+                    loginBtn.disabled = false;
+                    loginBtnText.innerHTML = 'Login';
                 }
             } catch (error) {
                 console.error('Login error:', error);
                 document.getElementById('errorMessage').textContent = 'Login failed. Please try again.';
                 document.getElementById('errorMessage').style.display = 'block';
+                
+                // Re-enable button and restore text
+                loginBtn.disabled = false;
+                loginBtnText.innerHTML = 'Login';
             }
         });
 
