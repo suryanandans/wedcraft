@@ -15,7 +15,7 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             min-height: 100vh;
             overflow-x: hidden;
         }
@@ -82,7 +82,7 @@
             font-family: 'Playfair Display', serif;
             font-size: 24px;
             font-weight: 700;
-            color: #667eea;
+            color: #d4af37;
         }
 
         .header-right {
@@ -99,7 +99,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #d4af37, #b8860b);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -151,8 +151,8 @@
         }
 
         .dropdown-item:hover {
-            background: rgba(102, 126, 234, 0.05);
-            color: #667eea;
+            background: rgba(212, 175, 55, 0.05);
+            color: #d4af37;
         }
 
         .dropdown-item:first-child {
@@ -242,9 +242,9 @@
         }
 
         .nav-item:hover, .nav-item.active {
-            background: rgba(102, 126, 234, 0.1);
-            color: #667eea;
-            border-left-color: #667eea;
+            background: rgba(212, 175, 55, 0.1);
+            color: #d4af37;
+            border-left-color: #d4af37;
         }
 
         .sidebar:not(.active) .nav-item:hover,
@@ -324,7 +324,7 @@
         }
 
         .section-title i {
-            color: #667eea;
+            color: #d4af37;
         }
 
         .btn {
@@ -341,7 +341,7 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #d4af37, #b8860b);
             color: white;
         }
 
@@ -351,9 +351,9 @@
         }
 
         .btn-secondary {
-            background: rgba(102, 126, 234, 0.1);
-            color: #667eea;
-            border: 1px solid rgba(102, 126, 234, 0.2);
+            background: rgba(212, 175, 55, 0.1);
+            color: #d4af37;
+            border: 1px solid rgba(212, 175, 55, 0.2);
         }
 
         .btn-secondary:hover {
@@ -430,8 +430,8 @@
 
         .form-input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #d4af37;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
         }
 
         .form-select {
@@ -452,6 +452,8 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             display: none;
             align-items: center;
             justify-content: center;
@@ -464,7 +466,7 @@
 
         .modal-content {
             background: white;
-            border-radius: 20px;
+            border-radius: 16px;
             padding: 30px;
             max-width: 500px;
             width: 90%;
@@ -472,6 +474,13 @@
             overflow-y: auto;
             position: relative;
             animation: modalSlideIn 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        .modal-content::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
         }
 
         @keyframes modalSlideIn {
@@ -485,7 +494,7 @@
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 15px;
-            border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+            border-bottom: 2px solid rgba(212, 175, 55, 0.1);
         }
 
         .modal-title {
@@ -506,8 +515,8 @@
         }
 
         .close-btn:hover {
-            background: rgba(102, 126, 234, 0.1);
-            color: #667eea;
+            background: rgba(212, 175, 55, 0.1);
+            color: #d4af37;
         }
 
         /* Stats Cards */
@@ -519,7 +528,7 @@
         }
 
         .stat-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(250, 248, 243, 0.9));
             backdrop-filter: blur(20px);
             border-radius: 16px;
             padding: 25px;
@@ -717,28 +726,28 @@
             
             <div class="stats-grid" id="adminStatsGrid">
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #d4af37, #b8860b);">
                         <i class="fas fa-users"></i>
                     </div>
                     <div class="stat-number" id="totalUsers">0</div>
                     <div class="stat-label">Total Users</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #ff6b9d, #c44569);">
                         <i class="fas fa-heart"></i>
                     </div>
                     <div class="stat-number" id="totalEvents">0</div>
                     <div class="stat-label">Total Events</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #5f9ea0, #4682b4);">
                         <i class="fas fa-envelope"></i>
                     </div>
                     <div class="stat-number" id="totalRSVPs">0</div>
                     <div class="stat-label">Active Forms</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #90c695, #6ba368);">
                         <i class="fas fa-check-circle"></i>
                     </div>
                     <div class="stat-number" id="activeEvents">0</div>
@@ -749,21 +758,21 @@
             <!-- User-specific stats grid -->
             <div class="stats-grid" id="userStatsGrid" style="display: none;">
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #ff6b9d, #c44569);">
                         <i class="fas fa-heart"></i>
                     </div>
                     <div class="stat-number" id="userTotalEvents">0</div>
                     <div class="stat-label">My Events</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #5f9ea0, #4682b4);">
                         <i class="fas fa-envelope"></i>
                     </div>
                     <div class="stat-number" id="userTotalRSVPs">0</div>
                     <div class="stat-label">RSVP Responses</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #90c695, #6ba368);">
                         <i class="fas fa-check-circle"></i>
                     </div>
                     <div class="stat-number" id="userActiveEvents">0</div>
@@ -922,7 +931,7 @@
 <!-- Invitation Section -->
         <section class="content-section" id="invitation">
             <!-- Event Selection View -->
-            <div id="invitationEventSelectionView">
+            <div id="invitationEventSelectionView" style="padding: 30px;">
                 <div class="section-header">
                     <h1 class="section-title">
                         <i class="fas fa-heart"></i>
@@ -932,9 +941,9 @@
                 
                 <div class="alert" id="invitationAlert"></div>
                 
-                <div style="padding: 40px 20px;">
+                <div style="padding: 30px;">
                     <div style="text-align: center; margin-bottom: 30px;">
-                        <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #f093fb, #f5576c); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 24px;">
+                        <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #ff6b9d, #c44569); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 24px;">
                             <i class="fas fa-heart"></i>
                         </div>
                         <h3 style="margin: 0; color: #333; font-size: 20px;">Choose an Event</h3>
@@ -948,7 +957,7 @@
             </div>
             
             <!-- Specific Event Invitation View -->
-            <div id="specificEventInvitationView" style="display: none;">
+            <div id="specificEventInvitationView" style="display: none; padding: 30px;">
                 <div class="section-header">
                     <h1 class="section-title">
                         <i class="fas fa-heart"></i>
@@ -975,10 +984,10 @@
 
         <!-- RSVP Responses Section -->
         <section class="content-section" id="rsvp-responses">
-            <div style="min-height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 0; margin: 0;">
+            <div style="min-height: 100vh; background: linear-gradient(135deg, #faf8f3 0%, #e8e5dc 100%); padding: 30px; margin: 0;">
             <!-- Event Selection View -->
             <!-- Event Selection View -->
-            <div id="eventSelectionView">
+            <div id="eventSelectionView" style="padding: 30px;">
                 <div class="section-header">
                     <h1 class="section-title">
                         <i class="fas fa-envelope-open-text"></i>
@@ -988,9 +997,9 @@
                 
                 <div class="alert" id="rsvpAlert"></div>
                 
-                <div style="padding: 40px 20px;">
+                <div style="padding: 30px;">
                     <div style="text-align: center; margin-bottom: 30px;">
-                        <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 24px;">
+                        <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #d4af37, #b8860b); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 24px;">
                             <i class="fas fa-calendar-check"></i>
                         </div>
                         <h3 style="margin: 0; color: #333; font-size: 20px;">Choose an Event</h3>
@@ -1004,7 +1013,7 @@
             </div>
             
             <!-- RSVP Responses View -->
-            <div id="rsvpResponsesView" style="display: none;">
+            <div id="rsvpResponsesView" style="display: none; padding: 30px;">
                 <div class="section-header">
                     <h1 class="section-title">
                         <i class="fas fa-envelope-open-text"></i>
@@ -1019,38 +1028,34 @@
                             <i class="fas fa-download"></i>
                             Download CSV
                         </button>
-                        <button class="btn btn-secondary" onclick="downloadRSVPData('pdf')">
-                            <i class="fas fa-file-pdf"></i>
-                            Download PDF
-                        </button>
                     </div>
                 </div>
                 
                 <!-- RSVP Summary Statistics -->
                 <div class="stats-grid" style="margin-bottom: 30px;">
                     <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #d4af37, #b8860b);">
                             <i class="fas fa-users"></i>
                         </div>
                         <div class="stat-number" id="totalFamiliesRegistered">0</div>
                         <div class="stat-label">Families Registered</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #90c695, #6ba368);">
                             <i class="fas fa-user-check"></i>
                         </div>
                         <div class="stat-number" id="predictedAttendees">0</div>
                         <div class="stat-label">Predicted Attendees</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #90c695, #6ba368);">
                             <i class="fas fa-leaf"></i>
                         </div>
                         <div class="stat-number" id="predictedVegCount">0</div>
                         <div class="stat-label">Predicted Vegetarian</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #d2691e, #a0522d);">
                             <i class="fas fa-drumstick-bite"></i>
                         </div>
                         <div class="stat-number" id="predictedNonVegCount">0</div>
@@ -1198,8 +1203,8 @@
             <div class="modal-body">
                 <div class="alert" id="uploadInvitationAlert" style="display: none;"></div>
                 
-                <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
-                    <h4 style="margin: 0 0 10px 0; color: #007bff;">
+                <div style="margin-bottom: 20px; padding: 15px; background: #faf8f3; border-radius: 8px; border-left: 4px solid #d4af37;">
+                    <h4 style="margin: 0 0 10px 0; color: #d4af37;">
                         <i class="fas fa-info-circle"></i> Instructions
                     </h4>
                     <ul style="margin: 0; padding-left: 20px; color: #666;">
@@ -2197,7 +2202,7 @@
                 const daysUntil = Math.ceil((eventDate - new Date()) / (1000 * 60 * 60 * 24));
                 
                 eventCard.innerHTML = `
-                    <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 20px;">
+                    <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #d4af37, #b8860b); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 20px;">
                         <i class="fas fa-heart"></i>
                     </div>
                     <h3 style="margin: 0 0 10px 0; color: #333; font-size: 16px; font-weight: 600;">
@@ -2209,7 +2214,7 @@
                     <p style="margin: 5px 0; color: #666; font-size: 13px;">
                         <i class="fas fa-map-marker-alt"></i> ${event.location}
                     </p>
-                    <div style="margin-top: 15px; padding: 6px 12px; background: ${daysUntil <= 0 ? 'rgba(220, 53, 69, 0.1)' : 'rgba(102, 126, 234, 0.1)'}; border-radius: 15px; color: ${daysUntil <= 0 ? '#dc3545' : '#667eea'}; font-weight: 600; font-size: 11px;">
+                    <div style="margin-top: 15px; padding: 6px 12px; background: ${daysUntil <= 0 ? 'rgba(220, 53, 69, 0.1)' : 'rgba(212, 175, 55, 0.1)'}; border-radius: 15px; color: ${daysUntil <= 0 ? '#dc3545' : '#d4af37'}; font-weight: 600; font-size: 11px;">
                         ${daysUntil <= 0 ? 'Past Event' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil} days to go`}
                     </div>
                 `;
@@ -2699,7 +2704,7 @@
             renderRSVPTable();
         }
 
-        // Download RSVP data in CSV or PDF format
+        // Download RSVP data in CSV format
         async function downloadRSVPData(format) {
             try {
                 const userId = getCurrentUserId();
@@ -2720,11 +2725,9 @@
                 
                 if (format === 'csv') {
                     downloadCSV(rsvpResponses);
-                } else if (format === 'pdf') {
-                    downloadPDF(rsvpResponses);
                 }
                 
-                showAlert('rsvpAlert', `RSVP data downloaded successfully as ${format.toUpperCase()}`, 'success');
+                showAlert('rsvpAlert', `RSVP data downloaded successfully as CSV`, 'success');
             } catch (error) {
                 console.error('Error downloading RSVP data:', error);
                 showAlert('rsvpAlert', 'Error downloading RSVP data', 'error');
@@ -2759,99 +2762,6 @@
             document.body.removeChild(link);
         }
 
-        // Download RSVP data as PDF
-        function downloadPDF(rsvpResponses) {
-            // Create a simple HTML content for PDF
-            const htmlContent = `
-                <html>
-                <head>
-                    <title>RSVP Responses Report</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; }
-                        h1 { color: #667eea; text-align: center; margin-bottom: 30px; }
-                        .summary { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
-                        .summary h2 { margin-top: 0; color: #333; }
-                        .stats { display: flex; justify-content: space-around; margin: 20px 0; }
-                        .stat { text-align: center; }
-                        .stat-number { font-size: 24px; font-weight: bold; color: #667eea; }
-                        .stat-label { font-size: 14px; color: #666; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-                        th { background-color: #667eea; color: white; }
-                        tr:nth-child(even) { background-color: #f2f2f2; }
-                        .badge-yes { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; }
-                        .badge-no { background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 4px; }
-                        .badge-maybe { background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; }
-                    </style>
-                </head>
-                <body>
-                    <h1>RSVP Responses Report</h1>
-                    <div class="summary">
-                        <h2>Summary Statistics</h2>
-                        <div class="stats">
-                            <div class="stat">
-                                <div class="stat-number">${rsvpResponses.length}</div>
-                                <div class="stat-label">Families Registered</div>
-                            </div>
-                            <div class="stat">
-                                <div class="stat-number">${calculatePredictedAttendees(rsvpResponses)}</div>
-                                <div class="stat-label">Predicted Attendees</div>
-                            </div>
-                            <div class="stat">
-                                <div class="stat-number">${Math.round(calculatePredictedAttendees(rsvpResponses) * 0.6)}</div>
-                                <div class="stat-label">Predicted Vegetarian</div>
-                            </div>
-                            <div class="stat">
-                                <div class="stat-number">${calculatePredictedAttendees(rsvpResponses) - Math.round(calculatePredictedAttendees(rsvpResponses) * 0.6)}</div>
-                                <div class="stat-label">Predicted Non-Veg</div>
-                            </div>
-                        </div>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Event</th>
-                                <th>Family Name</th>
-                                <th>Attendance</th>
-                                <th>Members</th>
-                                <th>Food Preference</th>
-                                <th>Submitted</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rsvpResponses.map(rsvp => `
-                                <tr>
-                                    <td>${rsvp.id}</td>
-                                    <td>${rsvp.event_name || 'Event ID: ' + rsvp.event_id}</td>
-                                    <td>${rsvp.family_name}</td>
-                                    <td><span class="badge-${rsvp.attendance.toLowerCase()}">${rsvp.attendance}</span></td>
-                                    <td>${rsvp.members_count || 'N/A'}</td>
-                                    <td>${formatFoodPreferences(rsvp)}</td>
-                                    <td>${new Date(rsvp.created_at).toLocaleDateString()}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                    <div style="margin-top: 30px; text-align: center; color: #666; font-size: 12px;">
-                        Generated on ${new Date().toLocaleDateString()} | WedCraft RSVP Management System
-                    </div>
-                </body>
-                </html>
-            `;
-
-            // Create a new window and print as PDF
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(htmlContent);
-            printWindow.document.close();
-            printWindow.focus();
-            
-            // Wait for content to load then trigger print
-            setTimeout(() => {
-                printWindow.print();
-                printWindow.close();
-            }, 500);
-        }
 
         // Helper function to calculate predicted attendees
         function calculatePredictedAttendees(rsvpResponses) {
@@ -3584,7 +3494,7 @@
                 eventCard.style.transition = 'all 0.3s ease';
                 eventCard.innerHTML = `
                     <div style="text-align: center;">
-                        <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #f093fb, #f5576c); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 20px;">
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #ff6b9d, #c44569); display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 20px;">
                             <i class="fas fa-heart"></i>
                         </div>
                         <h3 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">${getEventDisplayName(event)}</h3>
@@ -3691,8 +3601,8 @@
         }
 
         .badge-user {
-            background: rgba(102, 126, 234, 0.2);
-            color: #667eea;
+            background: rgba(212, 175, 55, 0.2);
+            color: #d4af37;
         }
 
         .badge-admin {
