@@ -132,6 +132,14 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+    role: Optional[str] = None
+    wedding_date: Optional[str] = None
+    is_active: Optional[bool] = None
+
 class AdminLogin(BaseModel):
     email: EmailStr
     password: str
@@ -523,6 +531,64 @@ async def get_admins(db: Session = Depends(get_db)):
         ]
     }
 
+@app.put("/api/admin/users/{user_id}")
+async def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get_db)):
+    """Update a user's information"""
+    try:
+        # Find the user
+        db_user = db.query(User).filter(User.id == user_id).first()
+        
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Update fields if provided
+        if user_update.name is not None:
+            db_user.name = user_update.name
+        
+        if user_update.email is not None:
+            # Check if email already exists for another user
+            existing_user = db.query(User).filter(
+                User.email == user_update.email,
+                User.id != user_id
+            ).first()
+            if existing_user:
+                raise HTTPException(status_code=400, detail="Email already registered")
+            db_user.email = user_update.email
+        
+        if user_update.password is not None:
+            # Hash the new password
+            db_user.hashed_password = get_password_hash(user_update.password)
+        
+        if user_update.role is not None:
+            db_user.role = user_update.role
+        
+        if user_update.wedding_date is not None:
+            db_user.wedding_date = user_update.wedding_date
+        
+        if user_update.is_active is not None:
+            db_user.is_active = user_update.is_active
+        
+        db.commit()
+        db.refresh(db_user)
+        
+        return {
+            "success": True,
+            "message": "User updated successfully",
+            "user": {
+                "id": db_user.id,
+                "name": db_user.name,
+                "email": db_user.email,
+                "role": db_user.role,
+                "wedding_date": db_user.wedding_date,
+                "is_active": db_user.is_active,
+                "created_at": db_user.created_at.isoformat()
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 @app.delete("/api/admin/users/{user_id}")
 async def delete_user(user_id: int, db: Session = Depends(get_db)):
     """Delete a user (handles both regular users and admins)"""
@@ -1228,18 +1294,30 @@ async def trigger_analytics_processing(db: Session = Depends(get_db)):
 # Dashboard stats endpoint
 @app.get("/api/admin/stats")
 async def get_dashboard_stats(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+    # Get today's date for filtering upcoming events
+    today = datetime.utcnow().date()
+    
     if user_id:
         # User-specific stats
         total_users = 1  # Only the user themselves
         total_events = db.query(Event).filter(Event.user_id == user_id).count()
         total_rsvps = db.query(RSVPResponse).join(Event, RSVPResponse.event_id == Event.id).filter(Event.user_id == user_id).count()
-        active_events = db.query(Event).filter(Event.user_id == user_id, Event.is_active == True).count()
+        # Active events: events that are active AND have future dates (>= today)
+        active_events = db.query(Event).filter(
+            Event.user_id == user_id,
+            Event.is_active == True,
+            Event.wedding_date >= today
+        ).count()
     else:
         # Admin stats (all data)
         total_users = db.query(User).count()
         total_events = db.query(Event).count()
         total_rsvps = db.query(RSVPResponse).count()
-        active_events = db.query(Event).filter(Event.is_active == True).count()
+        # Active events: events that are active AND have future dates (>= today)
+        active_events = db.query(Event).filter(
+            Event.is_active == True,
+            Event.wedding_date >= today
+        ).count()
     
     return {
         "success": True,

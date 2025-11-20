@@ -728,7 +728,7 @@
                         <i class="fas fa-heart"></i>
                     </div>
                     <div class="stat-number" id="totalEvents">0</div>
-                    <div class="stat-label">Wedding Events</div>
+                    <div class="stat-label">Total Events</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
@@ -768,26 +768,6 @@
                     </div>
                     <div class="stat-number" id="userActiveEvents">0</div>
                     <div class="stat-label">Active Events</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);">
-                        <i class="fas fa-calendar-day"></i>
-                    </div>
-                    <div class="stat-number" id="upcomingEventsCount">0</div>
-                    <div class="stat-label">Upcoming Events</div>
-                </div>
-            </div>
-            
-            <!-- Upcoming Events Section for Users -->
-            <div id="upcomingEventsSection" style="display: none;">
-                <div class="section-header" style="margin-top: 40px;">
-                    <h2 class="section-title" style="font-size: 24px;">
-                        <i class="fas fa-calendar-check"></i>
-                        Upcoming Events
-                    </h2>
-                </div>
-                <div id="upcomingEventsList">
-                    <!-- Upcoming events will be loaded here -->
                 </div>
             </div>
         </section>
@@ -1129,6 +1109,37 @@
             </form>
         </div>
     </div>
+<!-- Edit User Modal -->
+    <div class="modal" id="editUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit User</h2>
+                <button class="close-btn" onclick="closeEditUserModal()">&times;</button>
+            </div>
+            <form id="editUserForm">
+                <input type="hidden" id="editUserId">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input" id="editUserName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="editUserEmail" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password (leave blank to keep current)</label>
+                    <input type="password" class="form-input" id="editUserPassword" placeholder="Enter new password or leave blank">
+                </div>
+                <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditUserModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span id="editUserBtnText">Update User</span>
+                        <div class="loading" id="editUserLoading" style="display: none;"></div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Create Event Modal -->
     <div class="modal" id="createEventModal">
@@ -1266,6 +1277,9 @@
 
             // Create user form submission
             document.getElementById('createUserForm').addEventListener('submit', handleCreateUser);
+            
+            // Edit user form submission
+            document.getElementById('editUserForm').addEventListener('submit', handleEditUser);
         }
 
         // Check authentication
@@ -1375,12 +1389,6 @@
                     eventSectionTitle.innerHTML = '<i class="fas fa-calendar-alt"></i> My Events';
                 }
                 
-                // Show upcoming events section for users
-                const upcomingEventsSection = document.getElementById('upcomingEventsSection');
-                if (upcomingEventsSection) {
-                    upcomingEventsSection.style.display = 'block';
-                }
-                
                 // Show user-specific stats grid and hide admin stats grid
                 const adminStatsGrid = document.getElementById('adminStatsGrid');
                 const userStatsGrid = document.getElementById('userStatsGrid');
@@ -1479,11 +1487,6 @@
                 
                 // Hide loading indicators
                 hideLoadingState();
-                
-                // Load upcoming events for users
-                if (!isAdmin()) {
-                    await loadUpcomingEvents();
-                }
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
                 await loadIndividualStats();
@@ -1985,91 +1988,6 @@
         }
         
         // Load upcoming events for users
-        async function loadUpcomingEvents() {
-            try {
-                const userId = getCurrentUserId();
-                const response = await fetch(`/api/admin/events?user_id=${userId}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    const events = data.events || [];
-                    
-                    // Filter for upcoming events (future dates)
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    
-                    const upcomingEvents = events.filter(event => {
-                        const eventDate = new Date(event.wedding_date);
-                        return eventDate >= today;
-                    }).sort((a, b) => new Date(a.wedding_date) - new Date(b.wedding_date));
-                    
-                    renderUpcomingEvents(upcomingEvents);
-                } else {
-                    renderUpcomingEvents([]);
-                }
-            } catch (error) {
-                console.error('Error loading upcoming events:', error);
-                renderUpcomingEvents([]);
-            }
-        }
-        
-        // Render upcoming events
-        function renderUpcomingEvents(upcomingEvents) {
-            const container = document.getElementById('upcomingEventsList');
-            container.innerHTML = '';
-            
-            // Update upcoming events count in stats
-            const upcomingCountElement = document.getElementById('upcomingEventsCount');
-            if (upcomingCountElement) {
-                upcomingCountElement.textContent = upcomingEvents.length;
-            }
-            
-            if (upcomingEvents.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: #666;">
-                        <i class="fas fa-calendar-times" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
-                        <p style="font-size: 18px; margin: 0;">No upcoming events found</p>
-                        <p style="font-size: 14px; margin: 10px 0 0 0;">Create your first wedding event to get started!</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            upcomingEvents.forEach(event => {
-                const eventDate = new Date(event.wedding_date);
-                const daysUntil = Math.ceil((eventDate - new Date()) / (1000 * 60 * 60 * 24));
-                
-                const eventCard = document.createElement('div');
-                eventCard.className = 'stat-card';
-                eventCard.style.marginBottom = '20px';
-                eventCard.innerHTML = `
-                    <div style="display: flex; justify-content: between; align-items: start;">
-                        <div style="flex: 1;">
-                            <h3 style="margin: 0 0 10px 0; color: #333; font-size: 20px;">
-                                ${getEventDisplayName(event)}
-                            </h3>
-                            <p style="margin: 5px 0; color: #666;">
-                                <i class="fas fa-calendar"></i> ${eventDate.toLocaleDateString('en-US', {
-                                    weekday: 'long',
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                })}
-                            </p>
-                            <p style="margin: 5px 0; color: #666;">
-                                <i class="fas fa-map-marker-alt"></i> ${event.location}
-                            </p>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px;">
-                                ${daysUntil === 0 ? 'Today!' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil} days`}
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(eventCard);
-            });
-        }
-
         // Render events table
         function renderEventsTable(eventsToRender = events) {
             const tbody = document.getElementById('eventsTableBody');
@@ -2099,12 +2017,14 @@
                             <button class="btn btn-secondary btn-sm" onclick="viewEvent(${event.id})" title="View Event">
                                 <i class="fas fa-eye"></i>
                             </button>
+                            ${isAdmin() ? `
                             <button class="btn btn-primary btn-sm" onclick="openUploadInvitationModal(${event.id})" title="Upload Custom Invitation">
                                 <i class="fas fa-upload"></i>
                             </button>
                             <button class="btn btn-danger btn-sm" onclick="deleteEvent(${event.id})" title="Delete Event">
                                 <i class="fas fa-trash"></i>
                             </button>
+                            ` : ''}
                         </div>
                     </td>
                 `;
@@ -3058,8 +2978,7 @@
                 name: document.getElementById('userName').value,
                 email: document.getElementById('userEmail').value,
                 password: document.getElementById('userPassword').value,
-                role: 'user', // Default role for all created users
-                wedding_date: null // No wedding date field
+                role: 'user' // Default role for all created users
             };
 
             try {
@@ -3102,9 +3021,88 @@
         }
 
         // Edit user
-        function editUser(userId) {
-            // TODO: Implement edit user functionality
-            console.log('Edit user:', userId);
+        async function editUser(userId) {
+            try {
+                // Fetch user data
+                const response = await fetch(`/api/admin/users?user_id=${userId}`);
+                const data = await response.json();
+                
+                if (data.success && data.users.length > 0) {
+                    const user = data.users[0];
+                    
+                    // Populate the edit form
+                    document.getElementById('editUserId').value = user.id;
+                    document.getElementById('editUserName').value = user.name;
+                    document.getElementById('editUserEmail').value = user.email;
+                    document.getElementById('editUserPassword').value = ''; // Leave blank
+                    
+                    // Open the modal
+                    document.getElementById('editUserModal').classList.add('active');
+                } else {
+                    showAlert('userAlert', 'Failed to load user data', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                showAlert('userAlert', 'Error loading user data', 'error');
+            }
+        }
+        
+        // Close edit user modal
+        function closeEditUserModal() {
+            document.getElementById('editUserModal').classList.remove('active');
+            document.getElementById('editUserForm').reset();
+        }
+        
+        // Handle edit user form submission
+        async function handleEditUser(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('editUserBtnText');
+            const loading = document.getElementById('editUserLoading');
+            
+            // Show loading state
+            submitBtn.style.display = 'none';
+            loading.style.display = 'inline-block';
+            
+            const userId = document.getElementById('editUserId').value;
+            const password = document.getElementById('editUserPassword').value;
+            
+            const formData = {
+                name: document.getElementById('editUserName').value,
+                email: document.getElementById('editUserEmail').value
+            };
+            
+            // Only include password if it was provided
+            if (password.trim() !== '') {
+                formData.password = password;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('userAlert', 'User updated successfully!', 'success');
+                    closeEditUserModal();
+                    loadUsers(); // Reload users table
+                } else {
+                    showAlert('userAlert', data.detail || 'Failed to update user', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating user:', error);
+                showAlert('userAlert', 'Error updating user', 'error');
+            } finally {
+                // Reset button state
+                submitBtn.style.display = 'inline';
+                loading.style.display = 'none';
+            }
         }
 
         // Delete user
