@@ -491,9 +491,9 @@ async def get_users(user_id: Optional[int] = None, db: Session = Depends(get_db)
         
         return {"success": True, "users": []}
     
-    # Admin access - return all users
-    # Get regular users
-    users = db.query(User).all()
+    # Admin access - return only regular users (not admins)
+    # Get regular users with role 'user' only, excluding admins
+    users = db.query(User).filter(User.role == "user").all()
     user_list = [
         {
             "id": user.id,
@@ -508,28 +508,9 @@ async def get_users(user_id: Optional[int] = None, db: Session = Depends(get_db)
         for user in users
     ]
     
-    # Get admin users and add them to the list
-    admins = db.query(Admin).all()
-    admin_list = [
-        {
-            "id": admin.id + 10000,  # Offset admin IDs to avoid conflicts
-            "name": admin.name,
-            "email": admin.email,
-            "role": admin.role,
-            "wedding_date": None,  # Admins don't have wedding dates
-            "is_active": admin.is_active,
-            "created_at": admin.created_at.isoformat(),
-            "user_type": "admin"
-        }
-        for admin in admins
-    ]
-    
-    # Combine both lists
-    all_users = user_list + admin_list
-    
     return {
         "success": True,
-        "users": all_users
+        "users": user_list
     }
 
 @app.get("/api/admin/admins")
@@ -741,6 +722,17 @@ async def get_event(event_id: int, db: Session = Depends(get_db)):
         if not db_event:
             raise HTTPException(status_code=404, detail="Event not found")
         
+        # Check if event date has passed and automatically mark as inactive
+        if db_event.wedding_date and db_event.is_active:
+            try:
+                today = datetime.now().date()
+                event_date = datetime.strptime(db_event.wedding_date, '%Y-%m-%d').date()
+                if event_date < today:
+                    db_event.is_active = False
+                    db.commit()
+            except ValueError:
+                pass
+        
         return {
             "success": True,
             "event": {
@@ -853,9 +845,25 @@ async def get_events(user_id: Optional[int] = None, db: Session = Depends(get_db
         # Admin access - return all events
         events = db.query(Event).all()
     
+    # Get current date for comparison
+    today = datetime.now().date()
+    
     events_with_users = []
     
     for event in events:
+        # Check if event date has passed and automatically mark as inactive
+        if event.wedding_date and event.is_active:
+            try:
+                # Parse the wedding date (assuming format YYYY-MM-DD)
+                event_date = datetime.strptime(event.wedding_date, '%Y-%m-%d').date()
+                # If event date has passed, mark as inactive
+                if event_date < today:
+                    event.is_active = False
+                    db.commit()
+            except ValueError:
+                # If date format is invalid, skip the check
+                pass
+        
         # Try to find user in regular users table first
         user = db.query(User).filter(User.id == event.user_id).first()
         user_name = None
@@ -896,35 +904,6 @@ async def get_events(user_id: Optional[int] = None, db: Session = Depends(get_db
         "events": events_with_users
     }
 
-@app.get("/api/admin/users")
-async def get_users(db: Session = Depends(get_db)):
-    users = db.query(User).all()
-    users_data = []
-    for user in users:
-        # Get the user's events
-        user_events = db.query(Event).filter(Event.user_id == user.id).all()
-        
-        # Collect event names
-        event_names = []
-        for event in user_events:
-            if event.event_name:
-                event_names.append(event.event_name)
-            elif event.bride_name and event.groom_name:
-                event_names.append(f"{event.bride_name} & {event.groom_name}")
-        
-        users_data.append({
-            "id": user.id,
-            "name": user.name,
-            "email": user.email,
-            "role": user.role,
-            "created_at": user.created_at,
-            "events": ", ".join(event_names) if event_names else "No events"
-        })
-    
-    return {
-        "success": True,
-        "users": users_data
-    }
 
 @app.delete("/api/admin/events/{event_id}")
 async def delete_event(event_id: int, db: Session = Depends(get_db)):
@@ -998,6 +977,17 @@ async def get_event_details(event_id: int, db: Session = Depends(get_db)):
         
         if not event:
             raise HTTPException(status_code=404, detail="Event not found")
+        
+        # Check if event date has passed and automatically mark as inactive
+        if event.wedding_date and event.is_active:
+            try:
+                today = datetime.now().date()
+                event_date = datetime.strptime(event.wedding_date, '%Y-%m-%d').date()
+                if event_date < today:
+                    event.is_active = False
+                    db.commit()
+            except ValueError:
+                pass
         
         # Get user details
         user = db.query(User).filter(User.id == event.user_id).first()
