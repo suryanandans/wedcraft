@@ -950,6 +950,28 @@
                         <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;">Select an event to view and customize its invitation</p>
                     </div>
                     
+                    <!-- Filter Controls for Invitation Events -->
+                    <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 1000px; margin: 0 auto 30px;">
+                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 250px;">
+                                <input type="text" id="invitationEventSearch" placeholder="Search events by name or location..." style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;" oninput="filterInvitationEvents()">
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <label style="font-weight: 500; color: #333; white-space: nowrap;">Date:</label>
+                                <input type="date" id="invitationEventDateFilter" style="padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;" onchange="filterInvitationEvents()">
+                            </div>
+                            <div id="invitationUserFilterContainer" style="display: none; gap: 10px; align-items: center;">
+                                <label style="font-weight: 500; color: #333; white-space: nowrap;">User:</label>
+                                <select id="invitationEventUserFilter" style="padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; min-width: 150px;" onchange="filterInvitationEvents()">
+                                    <option value="">All Users</option>
+                                </select>
+                            </div>
+                            <button onclick="clearInvitationFilters()" style="padding: 10px 20px; background: #f5f5f5; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; color: #666;">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div id="invitationEventCardsContainer" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1000px; margin: 0 auto;">
                         <!-- Event selection options will be loaded here -->
                     </div>
@@ -1004,6 +1026,28 @@
                         </div>
                         <h3 style="margin: 0; color: #333; font-size: 20px;">Choose an Event</h3>
                         <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;">Select an event to view its RSVP responses</p>
+                    </div>
+                    
+                    <!-- Filter Controls for RSVP Events -->
+                    <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 1000px; margin: 0 auto 30px;">
+                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 250px;">
+                                <input type="text" id="rsvpEventSearch" placeholder="Search events by name or location..." style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;" oninput="filterRSVPEvents()">
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <label style="font-weight: 500; color: #333; white-space: nowrap;">Date:</label>
+                                <input type="date" id="rsvpEventDateFilter" style="padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;" onchange="filterRSVPEvents()">
+                            </div>
+                            <div id="rsvpUserFilterContainer" style="display: none; gap: 10px; align-items: center;">
+                                <label style="font-weight: 500; color: #333; white-space: nowrap;">User:</label>
+                                <select id="rsvpEventUserFilter" style="padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; min-width: 150px;" onchange="filterRSVPEvents()">
+                                    <option value="">All Users</option>
+                                </select>
+                            </div>
+                            <button onclick="clearRSVPFilters()" style="padding: 10px 20px; background: #f5f5f5; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; color: #666;">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                        </div>
                     </div>
                     
                     <div id="eventCardsContainer" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1000px; margin: 0 auto;">
@@ -1264,6 +1308,7 @@
             checkAuth();
             loadDashboardData();
             setupEventListeners();
+            populateUserFilters();
         });
 
         // Setup event listeners
@@ -2220,6 +2265,203 @@
                 `;
                 container.appendChild(eventCard);
             });
+        }
+// Filter RSVP events
+function filterRSVPEvents() {
+    const searchTerm = document.getElementById('rsvpEventSearch').value.toLowerCase();
+    const dateFilter = document.getElementById('rsvpEventDateFilter').value;
+    const userFilter = document.getElementById('rsvpEventUserFilter') ? document.getElementById('rsvpEventUserFilter').value : '';
+    
+    const container = document.getElementById('eventCardsContainer');
+    const cards = container.children;
+    
+    let visibleCount = 0;
+    
+    Array.from(cards).forEach((card, index) => {
+        const event = userEvents[index];
+        if (!event) return;
+        
+        const eventName = getEventDisplayName(event).toLowerCase();
+        const eventLocation = event.location.toLowerCase();
+        const eventDate = event.wedding_date;
+        const eventUserId = event.user_id ? event.user_id.toString() : '';
+        
+        let matchesSearch = true;
+        let matchesDate = true;
+        let matchesUser = true;
+        
+        if (searchTerm) {
+            matchesSearch = eventName.includes(searchTerm) || eventLocation.includes(searchTerm);
+        }
+        
+        if (dateFilter) {
+            matchesDate = eventDate === dateFilter;
+        }
+        
+        if (userFilter) {
+            matchesUser = eventUserId === userFilter;
+        }
+        
+        if (matchesSearch && matchesDate && matchesUser) {
+            card.style.display = '';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+            
+            // Show no results message if needed
+            if (visibleCount === 0 && userEvents.length > 0) {
+                if (!document.getElementById('noRSVPResults')) {
+                    const noResults = document.createElement('div');
+                    noResults.id = 'noRSVPResults';
+                    noResults.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;';
+                    noResults.innerHTML = `
+                        <i class="fas fa-search" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
+                        <p style="font-size: 18px; margin: 0;">No events match your filters</p>
+                        <p style="font-size: 14px; margin: 10px 0 0 0;">Try adjusting your search criteria.</p>
+                    `;
+                    container.appendChild(noResults);
+                }
+            } else {
+                const noResults = document.getElementById('noRSVPResults');
+                if (noResults) noResults.remove();
+            }
+        }
+        
+        // Clear RSVP filters
+        function clearRSVPFilters() {
+            document.getElementById('rsvpEventSearch').value = '';
+            document.getElementById('rsvpEventDateFilter').value = '';
+            if (document.getElementById('rsvpEventUserFilter')) {
+                document.getElementById('rsvpEventUserFilter').value = '';
+            }
+            filterRSVPEvents();
+        }
+        
+        // Filter Invitation events
+        let invitationEvents = [];
+        
+        function filterInvitationEvents() {
+            const searchTerm = document.getElementById('invitationEventSearch').value.toLowerCase();
+            const dateFilter = document.getElementById('invitationEventDateFilter').value;
+            const userFilter = document.getElementById('invitationEventUserFilter') ? document.getElementById('invitationEventUserFilter').value : '';
+            
+            const container = document.getElementById('invitationEventCardsContainer');
+            const cards = container.children;
+            
+            let visibleCount = 0;
+            
+            Array.from(cards).forEach((card, index) => {
+                const event = invitationEvents[index];
+                if (!event) return;
+                
+                const eventName = getEventDisplayName(event).toLowerCase();
+                const eventLocation = event.location.toLowerCase();
+                const eventDate = event.wedding_date;
+                const eventUserId = event.user_id ? event.user_id.toString() : '';
+                
+                let matchesSearch = true;
+                let matchesDate = true;
+                let matchesUser = true;
+                
+                if (searchTerm) {
+                    matchesSearch = eventName.includes(searchTerm) || eventLocation.includes(searchTerm);
+                }
+                
+                if (dateFilter) {
+                    matchesDate = eventDate === dateFilter;
+                }
+                
+                if (userFilter) {
+                    matchesUser = eventUserId === userFilter;
+                }
+                
+                if (matchesSearch && matchesDate && matchesUser) {
+                    card.style.display = '';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Show no results message if needed
+            if (visibleCount === 0 && invitationEvents.length > 0) {
+                if (!document.getElementById('noInvitationResults')) {
+                    const noResults = document.createElement('div');
+                    noResults.id = 'noInvitationResults';
+                    noResults.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;';
+                    noResults.innerHTML = `
+                        <i class="fas fa-search" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
+                        <p style="font-size: 18px; margin: 0;">No events match your filters</p>
+                        <p style="font-size: 14px; margin: 10px 0 0 0;">Try adjusting your search criteria.</p>
+                    `;
+                    container.appendChild(noResults);
+                }
+            } else {
+                const noResults = document.getElementById('noInvitationResults');
+                if (noResults) noResults.remove();
+            }
+        }
+        
+        // Clear Invitation filters
+        function clearInvitationFilters() {
+            document.getElementById('invitationEventSearch').value = '';
+            document.getElementById('invitationEventDateFilter').value = '';
+            if (document.getElementById('invitationEventUserFilter')) {
+                document.getElementById('invitationEventUserFilter').value = '';
+            }
+            filterInvitationEvents();
+        }
+        
+        // Populate user filter dropdowns
+        async function populateUserFilters() {
+            if (!isAdmin()) return;
+            
+            try {
+                const response = await fetch('/api/admin/users');
+                if (response.ok) {
+                    const data = await response.json();
+                    const users = data.users || [];
+                    
+                    // Show user filter containers for admin
+                    const rsvpUserFilterContainer = document.getElementById('rsvpUserFilterContainer');
+                    const invitationUserFilterContainer = document.getElementById('invitationUserFilterContainer');
+                    
+                    if (rsvpUserFilterContainer) {
+                        rsvpUserFilterContainer.style.display = 'flex';
+                    }
+                    if (invitationUserFilterContainer) {
+                        invitationUserFilterContainer.style.display = 'flex';
+                    }
+                    
+                    // Populate RSVP user filter
+                    const rsvpUserFilter = document.getElementById('rsvpEventUserFilter');
+                    if (rsvpUserFilter) {
+                        rsvpUserFilter.innerHTML = '<option value="">All Users</option>';
+                        users.forEach(user => {
+                            const option = document.createElement('option');
+                            option.value = user.id;
+                            option.textContent = user.name;
+                            rsvpUserFilter.appendChild(option);
+                        });
+                    }
+                    
+                    // Populate Invitation user filter
+                    const invitationUserFilter = document.getElementById('invitationEventUserFilter');
+                    if (invitationUserFilter) {
+                        invitationUserFilter.innerHTML = '<option value="">All Users</option>';
+                        users.forEach(user => {
+                            const option = document.createElement('option');
+                            option.value = user.id;
+                            option.textContent = user.name;
+                            invitationUserFilter.appendChild(option);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error populating user filters:', error);
+            }
         }
 
         // Select an event and show its RSVP responses
@@ -3463,6 +3705,7 @@
 
         function populateInvitationEventCards(events) {
             console.log('Populating invitation event cards with:', events);
+            invitationEvents = events; // Store events for filtering
             const container = document.getElementById('invitationEventCardsContainer');
             console.log('Container element:', container);
             
