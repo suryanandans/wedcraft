@@ -1169,13 +1169,33 @@
                             </div>
                             <div class="stat-number" id="actualVegCount">0</div>
                             <div class="stat-label">Vegetarian</div>
+                            <div style="font-size: 15px; color: #666; margin-top: 8px; margin-left: -10px; padding: 10px; background: #f8f9fa; border-radius: 6px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                    <span style="font-weight: 500;">Total Veg:</span>
+                                    <span id="totalVegCount" style="font-weight: 600; color: #4caf50; font-size: 16px;">0</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="font-weight: 500;">Confirmed:</span>
+                                    <span id="confirmedVegCount" style="font-weight: 600; color: #2e7d32; font-size: 16px;">0</span>
+                                </div>
+                            </div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon" style="background: linear-gradient(135deg, #4caf50, #45a049);">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #ff6b6b, #c92a2a);">
                                 <i class="fas fa-drumstick-bite"></i>
                             </div>
                             <div class="stat-number" id="actualNonVegCount">0</div>
                             <div class="stat-label">Non-Veg</div>
+                            <div style="font-size: 15px; color: #666; margin-top: 8px; margin-left: -10px; padding: 10px; background: #f8f9fa; border-radius: 6px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                    <span style="font-weight: 500;">Total Non-Veg:</span>
+                                    <span id="totalNonVegCount" style="font-weight: 600; color: #ff6b6b; font-size: 16px;">0</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="font-weight: 500;">Confirmed:</span>
+                                    <span id="confirmedNonVegCount" style="font-weight: 600; color: #c92a2a; font-size: 16px;">0</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1218,11 +1238,30 @@
                     </div>
                 </div>
                 
+                <div style="margin-bottom: 20px; display: flex; gap: 15px; align-items: center; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div style="flex: 1;">
+                        <input type="text" id="familyNameFilter" placeholder="Filter by family name" style="width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 14px; outline: none;">
+                    </div>
+                    <div style="flex: 0 0 200px;">
+                        <select id="attendanceFilter" style="width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 14px; background: white; color: #666;">
+                            <option value="" disabled selected>Filter by attendance</option>
+                            <option value="">All</option>
+                            <option value="Yes">Yes</option>
+                            <option value="Maybe">Maybe</option>
+                        </select>
+                    </div>
+                    <div style="flex: 0 0 auto;">
+                        <button onclick="clearFilters()" style="padding: 10px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                            Clear Filters
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>S.No</th>
                                 <th>Family Name</th>
                                 <th>Attendance</th>
                                 <th>Members Count</th>
@@ -1442,6 +1481,18 @@
             
             // Edit user form submission
             document.getElementById('editUserForm').addEventListener('submit', handleEditUser);
+            
+            // RSVP filter listeners
+            const familyNameFilter = document.getElementById('familyNameFilter');
+            const attendanceFilter = document.getElementById('attendanceFilter');
+            
+            if (familyNameFilter) {
+                familyNameFilter.addEventListener('input', renderRSVPTable);
+            }
+            
+            if (attendanceFilter) {
+                attendanceFilter.addEventListener('change', renderRSVPTable);
+            }
         }
 
         // Check authentication
@@ -2243,7 +2294,7 @@
             }
         }
 
-        // Render RSVP table (individual responses)
+        // Render RSVP table (individual responses) with filtering
         function renderRSVPTable() {
             const tbody = document.getElementById('rsvpResponsesTableBody');
             tbody.innerHTML = '';
@@ -2256,11 +2307,27 @@
                 return;
             }
 
-            rsvpResponses.forEach((rsvp, index) => {
+            // Get filter values
+            const familyNameFilter = document.getElementById('familyNameFilter')?.value.toLowerCase() || '';
+            const attendanceFilter = document.getElementById('attendanceFilter')?.value || '';
+
+            // Filter responses
+            const filteredResponses = rsvpResponses.filter(rsvp => {
+                const matchesFamily = !familyNameFilter || rsvp.family_name.toLowerCase().includes(familyNameFilter);
+                const matchesAttendance = !attendanceFilter || rsvp.attendance === attendanceFilter;
+                return matchesFamily && matchesAttendance;
+            });
+
+            if (filteredResponses.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">No matching RSVP responses found</td></tr>';
+                return;
+            }
+
+            filteredResponses.forEach((rsvp, index) => {
                 if (index < 3) console.log(`Rendering response ${index + 1}:`, rsvp);
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${rsvp.id}</td>
+                    <td>${index + 1}</td>
                     <td>${rsvp.family_name}</td>
                     <td><span class="badge badge-${rsvp.attendance ? rsvp.attendance.toLowerCase() : 'unknown'}">${rsvp.attendance || 'N/A'}</span></td>
                     <td>${rsvp.members_count || 'N/A'}</td>
@@ -2269,6 +2336,13 @@
                 `;
                 tbody.appendChild(row);
             });
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('familyNameFilter').value = '';
+            document.getElementById('attendanceFilter').value = '';
+            renderRSVPTable();
         }
 
         // Load user-specific RSVP responses - show event selection first
@@ -2919,10 +2993,10 @@ function filterRSVPEvents() {
                 return;
             }
 
-            analyticsData.forEach(analytics => {
+            analyticsData.forEach((analytics, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${analytics.id}</td>
+                    <td>${index + 1}</td>
                     <td>${analytics.total_families} families</td>
                     <td>
                         <span class="badge badge-yes">${analytics.yes_responses} Yes</span>
@@ -3010,15 +3084,27 @@ function filterRSVPEvents() {
             // Count actual food preferences from individual family member data
             let vegCount = 0;
             let nonVegCount = 0;
+            let confirmedVegCount = 0;
+            let confirmedNonVegCount = 0;
             
             rsvpResponses.forEach(r => {
-                if ((r.attendance === 'Yes' || r.attendance === 'Maybe') && r.family_members && r.family_members.length > 0) {
+                if (r.family_members && r.family_members.length > 0) {
                     // Count individual family members' food preferences
                     r.family_members.forEach(member => {
                         if (member.food_preference === 'Vegetarian') {
-                            vegCount++;
+                            if (r.attendance === 'Yes' || r.attendance === 'Maybe') {
+                                vegCount++;
+                            }
+                            if (r.attendance === 'Yes') {
+                                confirmedVegCount++;
+                            }
                         } else if (member.food_preference === 'Non-Vegetarian') {
-                            nonVegCount++;
+                            if (r.attendance === 'Yes' || r.attendance === 'Maybe') {
+                                nonVegCount++;
+                            }
+                            if (r.attendance === 'Yes') {
+                                confirmedNonVegCount++;
+                            }
                         }
                     });
                 } else if ((r.attendance === 'Yes' || r.attendance === 'Maybe') && r.food_preference_summary) {
@@ -3026,8 +3112,14 @@ function filterRSVPEvents() {
                     if (r.food_preference_summary.toLowerCase().includes('vegetarian') &&
                         !r.food_preference_summary.toLowerCase().includes('non')) {
                         vegCount += (r.members_count || 0);
+                        if (r.attendance === 'Yes') {
+                            confirmedVegCount += (r.members_count || 0);
+                        }
                     } else if (r.food_preference_summary.toLowerCase().includes('non')) {
                         nonVegCount += (r.members_count || 0);
+                        if (r.attendance === 'Yes') {
+                            confirmedNonVegCount += (r.members_count || 0);
+                        }
                     }
                 }
             });
@@ -3051,6 +3143,12 @@ function filterRSVPEvents() {
             document.getElementById('actualMaybeCount').textContent = maybeAttendees;
             document.getElementById('actualVegCount').textContent = vegCount;
             document.getElementById('actualNonVegCount').textContent = nonVegCount;
+            
+            // Update detailed food preference counts
+            document.getElementById('totalVegCount').textContent = vegCount;
+            document.getElementById('confirmedVegCount').textContent = confirmedVegCount;
+            document.getElementById('totalNonVegCount').textContent = nonVegCount;
+            document.getElementById('confirmedNonVegCount').textContent = confirmedNonVegCount;
             
             // Update predicted values
             document.getElementById('totalFamiliesRegisteredPredicted').textContent = totalFamilies;
@@ -3213,7 +3311,7 @@ function filterRSVPEvents() {
                 // Update table headers for summary view
                 const thead = document.querySelector('#rsvp-responses thead tr');
                 thead.innerHTML = `
-                    <th>ID</th>
+                    <th>S.No</th>
                     <th>Event</th>
                     <th>Total Families</th>
                     <th>Responses</th>
@@ -3236,7 +3334,7 @@ function filterRSVPEvents() {
                 // Update table headers for detailed view
                 const thead = document.querySelector('#rsvp-responses thead tr');
                 thead.innerHTML = `
-                    <th>ID</th>
+                    <th>S.No</th>
                     <th>Event</th>
                     <th>Family Name</th>
                     <th>Attendance</th>
@@ -3285,10 +3383,10 @@ function filterRSVPEvents() {
                 return;
             }
 
-            rsvpResponses.forEach(rsvp => {
+            rsvpResponses.forEach((rsvp, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${rsvp.id}</td>
+                    <td>${index + 1}</td>
                     <td>${rsvp.family_name}</td>
                     <td><span class="badge badge-${rsvp.attendance.toLowerCase()}">${rsvp.attendance}</span></td>
                     <td>${rsvp.members_count || 'N/A'}</td>

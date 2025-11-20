@@ -13,131 +13,145 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f0f2f5;
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .container {
-            max-width: 600px;
+            max-width: 650px;
             width: 100%;
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
             overflow: hidden;
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
             color: white;
-            padding: 40px 30px;
+            padding: 32px 24px;
             text-align: center;
         }
 
         .header h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 600;
         }
 
         .header p {
-            font-size: 16px;
-            opacity: 0.9;
+            font-size: 15px;
+            opacity: 0.95;
+            font-weight: 300;
         }
 
         .event-info {
-            background: #f8f9fa;
-            padding: 20px 30px;
-            border-bottom: 1px solid #e9ecef;
+            background: #f8f9fb;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
         }
 
         .event-info h2 {
-            color: #333;
-            font-size: 20px;
-            margin-bottom: 15px;
+            color: #1f2937;
+            font-size: 18px;
+            margin-bottom: 14px;
             display: flex;
             align-items: center;
             gap: 10px;
+            font-weight: 600;
         }
 
         .info-item {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 10px;
-            color: #666;
+            margin-bottom: 8px;
+            color: #6b7280;
             font-size: 14px;
         }
 
         .info-item i {
-            color: #667eea;
-            width: 20px;
+            color: #4A90E2;
+            width: 18px;
         }
 
         .form-section {
-            padding: 40px 30px;
+            padding: 32px 24px;
         }
 
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 22px;
         }
 
         .form-label {
             display: block;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 10px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
             font-size: 14px;
         }
 
         .form-input {
             width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s;
+            padding: 11px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .form-input:hover {
+            border-color: #9ca3af;
         }
 
         .form-input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #4A90E2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #9ca3af;
         }
 
         .attendance-options {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            display: flex;
+            gap: 12px;
         }
 
         .attendance-option {
-            padding: 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
+            flex: 1;
+            padding: 16px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             background: white;
+            user-select: none;
         }
 
         .attendance-option:hover {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
+            border-color: #4A90E2;
+            background: #f0f7ff;
         }
 
         .attendance-option.selected {
-            border-color: #667eea;
-            background: #667eea;
+            border-color: #4A90E2;
+            background: #4A90E2;
             color: white;
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.25);
         }
 
         .attendance-option i {
-            font-size: 24px;
-            margin-bottom: 8px;
+            font-size: 20px;
+            margin-bottom: 6px;
             display: block;
         }
 
@@ -148,48 +162,54 @@
         }
 
         .food-option {
-            padding: 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
+            padding: 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             background: white;
+            user-select: none;
         }
 
         .food-option:hover {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
+            border-color: #4A90E2;
+            background: #f0f7ff;
         }
 
         .food-option.selected {
-            border-color: #667eea;
-            background: #667eea;
+            border-color: #4A90E2;
+            background: #4A90E2;
             color: white;
         }
 
         .food-option i {
-            font-size: 20px;
-            margin-bottom: 8px;
+            font-size: 18px;
+            margin-bottom: 6px;
             display: block;
         }
 
         .submit-btn {
             width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 14px;
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 8px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
         }
 
         .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
         }
 
         .submit-btn:disabled {
@@ -199,34 +219,41 @@
         }
 
         .alert {
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            padding: 14px 16px;
+            border-radius: 8px;
+            margin-bottom: 18px;
             display: none;
+            font-size: 14px;
         }
 
         .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
         }
 
         .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
         }
 
         .loading {
             display: none;
             text-align: center;
-            margin-top: 20px;
+            margin-top: 16px;
         }
 
         .loading i {
-            font-size: 30px;
-            color: #667eea;
+            font-size: 24px;
+            color: #4A90E2;
             animation: spin 1s linear infinite;
+        }
+
+        .loading p {
+            margin-top: 8px;
+            color: #6b7280;
+            font-size: 14px;
         }
 
         @keyframes spin {
@@ -235,80 +262,108 @@
         }
 
         .guest-entry {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
+            background: #f8f9fb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 14px;
         }
 
         .guest-entry-header {
             font-weight: 600;
-            color: #333;
+            color: #374151;
             margin-bottom: 12px;
-            font-size: 15px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .guest-entry-header i {
+            color: #4A90E2;
         }
 
         .guest-food-options {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 12px;
         }
 
         .guest-food-option {
-            padding: 12px;
-            border: 2px solid #e1e5e9;
-            border-radius: 8px;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s;
             text-align: center;
             font-size: 13px;
+            font-weight: 500;
+            background: white;
+            user-select: none;
         }
 
         .guest-food-option:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
+            border-color: #4A90E2;
+            background: #f0f7ff;
         }
 
         .guest-food-option.selected {
-            border-color: #667eea;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #4A90E2;
+            background: #4A90E2;
             color: white;
         }
 
         .guest-food-option i {
             display: block;
-            font-size: 20px;
-            margin-bottom: 5px;
+            font-size: 16px;
+            margin-bottom: 4px;
         }
 
         .child-checkbox {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 14px;
-            color: #555;
+            font-size: 13px;
+            color: #6b7280;
             cursor: pointer;
+            user-select: none;
         }
 
         .child-checkbox input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             cursor: pointer;
+            accent-color: #4A90E2;
         }
 
         @media (max-width: 600px) {
-            .attendance-options {
-                grid-template-columns: 1fr;
+            body {
+                padding: 10px;
             }
 
-            .guest-food-options {
-                grid-template-columns: 1fr;
+            .container {
+                border-radius: 10px;
+            }
+
+            .header {
+                padding: 24px 20px;
             }
 
             .header h1 {
                 font-size: 24px;
+            }
+
+            .form-section {
+                padding: 24px 20px;
+            }
+
+            .attendance-options {
+                flex-direction: column;
+            }
+
+            .guest-food-options {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -339,7 +394,7 @@
             <div class="alert" id="alert"></div>
 
             <form id="rsvpForm">
-                <input type="hidden" id="eventId" value="1" required>
+                <input type="hidden" id="eventId" value="7" required>
 
                 <div class="form-group">
                     <label class="form-label">Your Family Name *</label>
