@@ -2018,8 +2018,8 @@
                                 <i class="fas fa-eye"></i>
                             </button>
                             ${isAdmin() ? `
-                            <button class="btn btn-primary btn-sm" onclick="openUploadInvitationModal(${event.id})" title="Upload Custom Invitation">
-                                <i class="fas fa-upload"></i>
+                            <button class="btn btn-secondary btn-sm" onclick="editEvent(${event.id})" title="Edit Event">
+                                <i class="fas fa-edit"></i>
                             </button>
                             <button class="btn btn-danger btn-sm" onclick="deleteEvent(${event.id})" title="Delete Event">
                                 <i class="fas fa-trash"></i>
@@ -3313,13 +3313,23 @@
             console.log('Show settings');
         }
 
+        // Track edit mode
+        let isEditingEvent = false;
+        let editingEventId = null;
+
         // Open create event modal
         function openCreateEventModal() {
+            isEditingEvent = false;
+            editingEventId = null;
             loadUsersForEvent();
             
             // Set minimum date to today
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('weddingDate').setAttribute('min', today);
+            
+            // Update modal title
+            document.querySelector('#createEventModal .modal-title').textContent = 'Create New Event';
+            document.getElementById('createEventBtnText').textContent = 'Create Event';
             
             document.getElementById('createEventModal').classList.add('active');
         }
@@ -3328,6 +3338,51 @@
         function closeCreateEventModal() {
             document.getElementById('createEventModal').classList.remove('active');
             document.getElementById('createEventForm').reset();
+            isEditingEvent = false;
+            editingEventId = null;
+        }
+
+        // Edit event function
+        async function editEvent(eventId) {
+            try {
+                // Fetch event details
+                const response = await fetch(`/api/admin/events/${eventId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch event details');
+                }
+                
+                const data = await response.json();
+                const event = data.event;
+                
+                // Set edit mode
+                isEditingEvent = true;
+                editingEventId = eventId;
+                
+                // Load users first
+                await loadUsersForEvent();
+                
+                // Populate form fields
+                document.getElementById('eventUserId').value = event.user_id;
+                document.getElementById('eventName').value = event.event_name || '';
+                document.getElementById('weddingDate').value = event.wedding_date;
+                document.getElementById('weddingLocation').value = event.location;
+                document.getElementById('googleMapsLink').value = event.google_maps_link;
+                document.getElementById('customInvitationUrl').value = event.custom_invitation_url;
+                
+                // Set minimum date to today
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('weddingDate').setAttribute('min', today);
+                
+                // Update modal title and button
+                document.querySelector('#createEventModal .modal-title').textContent = 'Edit Event';
+                document.getElementById('createEventBtnText').textContent = 'Update Event';
+                
+                // Open modal
+                document.getElementById('createEventModal').classList.add('active');
+            } catch (error) {
+                console.error('Error loading event for editing:', error);
+                showAlert('eventAlert', 'Error loading event details', 'error');
+            }
         }
 
         // Load users for event creation dropdown
@@ -3386,26 +3441,42 @@
             };
 
             try {
-                const response = await fetch('/api/admin/create-event', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData)
-                });
+                let response;
+                if (isEditingEvent) {
+                    // Update existing event
+                    response = await fetch(`/api/admin/events/${editingEventId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                } else {
+                    // Create new event
+                    response = await fetch('/api/admin/create-event', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                }
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    showAlert('eventAlert', 'Event created successfully!', 'success');
+                    const successMessage = isEditingEvent ? 'Event updated successfully!' : 'Event created successfully!';
+                    showAlert('eventAlert', successMessage, 'success');
                     closeCreateEventModal();
                     loadEvents(); // Reload events table
                 } else {
-                    showAlert('eventAlert', data.detail || 'Failed to create event', 'error');
+                    const errorMessage = isEditingEvent ? 'Failed to update event' : 'Failed to create event';
+                    showAlert('eventAlert', data.detail || errorMessage, 'error');
                 }
             } catch (error) {
-                console.error('Error creating event:', error);
-                showAlert('eventAlert', 'Error creating event', 'error');
+                console.error('Error saving event:', error);
+                const errorMessage = isEditingEvent ? 'Error updating event' : 'Error creating event';
+                showAlert('eventAlert', errorMessage, 'error');
             } finally {
                 // Reset button state
                 submitBtn.style.display = 'inline';

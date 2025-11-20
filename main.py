@@ -154,6 +154,16 @@ class EventCreate(BaseModel):
     google_maps_link: Optional[str] = None
     custom_invitation_url: Optional[str] = None
 
+class EventUpdate(BaseModel):
+    user_id: Optional[int] = None
+    event_name: Optional[str] = None
+    bride_name: Optional[str] = None
+    groom_name: Optional[str] = None
+    wedding_date: Optional[str] = None
+    location: Optional[str] = None
+    google_maps_link: Optional[str] = None
+    custom_invitation_url: Optional[str] = None
+
 class RSVPCreate(BaseModel):
     event_id: int
     family_name: str
@@ -713,6 +723,118 @@ async def create_event(event: EventCreate, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Error creating event: {str(e)}")
 
+@app.get("/api/admin/events/{event_id}")
+async def get_event(event_id: int, db: Session = Depends(get_db)):
+    """Get a specific event's details"""
+    try:
+        db_event = db.query(Event).filter(Event.id == event_id).first()
+        
+        if not db_event:
+            raise HTTPException(status_code=404, detail="Event not found")
+        
+        return {
+            "success": True,
+            "event": {
+                "id": db_event.id,
+                "user_id": db_event.user_id,
+                "event_name": db_event.event_name,
+                "bride_name": db_event.bride_name,
+                "groom_name": db_event.groom_name,
+                "wedding_date": db_event.wedding_date,
+                "location": db_event.location,
+                "google_maps_link": db_event.google_maps_link,
+                "custom_invitation_url": db_event.custom_invitation_url,
+                "created_at": db_event.created_at.isoformat()
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+@app.put("/api/admin/events/{event_id}")
+async def update_event(event_id: int, event_update: EventUpdate, db: Session = Depends(get_db)):
+    """Update an event's information"""
+    try:
+        # Find the event
+        db_event = db.query(Event).filter(Event.id == event_id).first()
+        
+        if not db_event:
+            raise HTTPException(status_code=404, detail="Event not found")
+        
+        # Update fields if provided
+        if event_update.user_id is not None:
+            # Validate that user exists
+            user_exists = None
+            actual_user_id = event_update.user_id
+            
+            if event_update.user_id >= 10000:
+                admin_id = event_update.user_id - 10000
+                user_exists = db.query(Admin).filter(Admin.id == admin_id).first()
+                actual_user_id = admin_id
+            else:
+                user_exists = db.query(User).filter(User.id == event_update.user_id).first()
+            
+            if not user_exists:
+                raise HTTPException(status_code=400, detail=f"User with ID {event_update.user_id} not found")
+            
+            db_event.user_id = actual_user_id
+        
+        if event_update.event_name is not None:
+            db_event.event_name = event_update.event_name
+        
+        if event_update.bride_name is not None:
+            db_event.bride_name = event_update.bride_name
+        
+        if event_update.groom_name is not None:
+            db_event.groom_name = event_update.groom_name
+        
+        if event_update.wedding_date is not None:
+            # Validate that event date is not before today
+            event_date = datetime.strptime(event_update.wedding_date, "%Y-%m-%d").date()
+            today = datetime.utcnow().date()
+            
+            if event_date < today:
+                raise HTTPException(status_code=400, detail="Event date cannot be before today")
+            
+            db_event.wedding_date = event_update.wedding_date
+        
+        if event_update.location is not None:
+            db_event.location = event_update.location
+        
+        if event_update.google_maps_link is not None:
+            db_event.google_maps_link = event_update.google_maps_link
+        
+        if event_update.custom_invitation_url is not None:
+            db_event.custom_invitation_url = event_update.custom_invitation_url
+        
+        # Validate that either event_name is provided OR both bride_name and groom_name are provided
+        if not db_event.event_name and not (db_event.bride_name and db_event.groom_name):
+            raise HTTPException(status_code=400, detail="Either event_name or both bride_name and groom_name must be provided")
+        
+        db.commit()
+        db.refresh(db_event)
+        
+        return {
+            "success": True,
+            "message": "Event updated successfully",
+            "event": {
+                "id": db_event.id,
+                "user_id": db_event.user_id,
+                "event_name": db_event.event_name,
+                "bride_name": db_event.bride_name,
+                "groom_name": db_event.groom_name,
+                "wedding_date": db_event.wedding_date,
+                "location": db_event.location,
+                "google_maps_link": db_event.google_maps_link,
+                "custom_invitation_url": db_event.custom_invitation_url,
+                "created_at": db_event.created_at.isoformat()
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 @app.get("/api/admin/events")
 async def get_events(user_id: Optional[int] = None, db: Session = Depends(get_db)):
     # If user_id is provided, return only events for that specific user
