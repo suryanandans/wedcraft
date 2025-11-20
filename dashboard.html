@@ -689,10 +689,6 @@
                 <i class="fas fa-users"></i>
                 <span>Users</span>
             </a>
-            <a href="#" class="nav-item" onclick="showSection('admin')">
-                <i class="fas fa-user-shield"></i>
-                <span>Admin</span>
-            </a>
             <a href="#" class="nav-item" onclick="showSection('events')">
                 <i class="fas fa-calendar-alt"></i>
                 <span>Events</span>
@@ -1154,20 +1150,20 @@
                     <input type="text" class="form-input" id="eventName" placeholder="e.g., John & Sarah's Wedding, Birthday Party, Engagement Ceremony" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Wedding Date</label>
-                    <input type="date" class="form-input" id="weddingDate" required>
+                    <label class="form-label">Event Date</label>
+                    <input type="date" class="form-input" id="weddingDate" required min="">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Wedding Location</label>
+                    <label class="form-label">Event Location</label>
                     <input type="text" class="form-input" id="weddingLocation" placeholder="e.g., Kochi, Kerala" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Invitation Message</label>
-                    <textarea class="form-input" id="invitationMessage" rows="3" placeholder="We would be honored to have you celebrate this special day with us..." required></textarea>
+                    <label class="form-label">Google Maps Location Link</label>
+                    <input type="url" class="form-input" id="googleMapsLink" placeholder="https://maps.google.com/..." required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Invitation Title</label>
-                    <input type="text" class="form-input" id="invitationTitle" value="You're Invited!" required>
+                    <label class="form-label">Custom Invitation Page URL</label>
+                    <input type="url" class="form-input" id="customInvitationUrl" placeholder="https://yoursite.com/invitation" required>
                 </div>
                 <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px;">
                     <button type="button" class="btn btn-secondary" onclick="closeCreateEventModal()">Cancel</button>
@@ -2062,11 +2058,6 @@
                             <p style="margin: 5px 0; color: #666;">
                                 <i class="fas fa-map-marker-alt"></i> ${event.location}
                             </p>
-                            ${event.invitation_message ? `
-                                <p style="margin: 10px 0 0 0; color: #555; font-style: italic;">
-                                    "${event.invitation_message}"
-                                </p>
-                            ` : ''}
                         </div>
                         <div style="text-align: right;">
                             <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px;">
@@ -2129,7 +2120,7 @@
 
         // Helper function to format food preferences from family members
         function formatFoodPreferences(rsvp) {
-            if (rsvp.attendance !== 'Yes') {
+            if (rsvp.attendance !== 'Yes' && rsvp.attendance !== 'Maybe') {
                 return 'N/A';
             }
             
@@ -2543,7 +2534,7 @@
             let historicalNonVegCount = 0;
             
             rsvpResponses.forEach(r => {
-                if (r.attendance === 'Yes' && r.family_members && r.family_members.length > 0) {
+                if ((r.attendance === 'Yes' || r.attendance === 'Maybe') && r.family_members && r.family_members.length > 0) {
                     r.family_members.forEach(member => {
                         if (member.food_preference === 'Vegetarian') {
                             historicalVegCount++;
@@ -2680,7 +2671,7 @@
             let nonVegCount = 0;
             
             rsvpResponses.forEach(r => {
-                if (r.attendance === 'Yes' && r.family_members && r.family_members.length > 0) {
+                if ((r.attendance === 'Yes' || r.attendance === 'Maybe') && r.family_members && r.family_members.length > 0) {
                     // Count individual family members' food preferences
                     r.family_members.forEach(member => {
                         if (member.food_preference === 'Vegetarian') {
@@ -2689,7 +2680,7 @@
                             nonVegCount++;
                         }
                     });
-                } else if (r.attendance === 'Yes' && r.food_preference_summary) {
+                } else if ((r.attendance === 'Yes' || r.attendance === 'Maybe') && r.food_preference_summary) {
                     // Fallback to summary data if individual data not available
                     if (r.food_preference_summary.toLowerCase().includes('vegetarian') &&
                         !r.food_preference_summary.toLowerCase().includes('non')) {
@@ -3327,6 +3318,11 @@
         // Open create event modal
         function openCreateEventModal() {
             loadUsersForEvent();
+            
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('weddingDate').setAttribute('min', today);
+            
             document.getElementById('createEventModal').classList.add('active');
         }
 
@@ -3367,6 +3363,17 @@
             const submitBtn = document.getElementById('createEventBtnText');
             const loading = document.getElementById('createEventLoading');
             
+            // Validate event date is not before today
+            const selectedDate = new Date(document.getElementById('weddingDate').value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            selectedDate.setHours(0, 0, 0, 0);
+            
+            if (selectedDate < today) {
+                showAlert('eventAlert', 'Event date cannot be before today', 'error');
+                return;
+            }
+            
             // Show loading state
             submitBtn.style.display = 'none';
             loading.style.display = 'inline-block';
@@ -3376,7 +3383,8 @@
                 event_name: document.getElementById('eventName').value,
                 wedding_date: document.getElementById('weddingDate').value,
                 location: document.getElementById('weddingLocation').value,
-                invitation_message: document.getElementById('invitationMessage').value || null
+                google_maps_link: document.getElementById('googleMapsLink').value,
+                custom_invitation_url: document.getElementById('customInvitationUrl').value
             };
 
             try {

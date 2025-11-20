@@ -65,33 +65,10 @@ class Event(Base):
     groom_name = Column(String(255), nullable=True)  # Made nullable for backward compatibility
     wedding_date = Column(String(20), nullable=False)
     location = Column(String(500), nullable=False)
-    invitation_message = Column(Text, nullable=True)
+    google_maps_link = Column(String(1000), nullable=True)
+    custom_invitation_url = Column(String(1000), nullable=True)
     custom_invitation_file = Column(String(500), nullable=True)  # Path to custom invitation HTML file
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-class FormTemplate(Base):
-    __tablename__ = "form_templates"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    form_schema = Column(Text, nullable=False)  # JSON schema for form fields
-    is_active = Column(Boolean, default=True)
-    created_by = Column(Integer, nullable=False)  # Admin ID who created it
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
-
-class FormResponse(Base):
-    __tablename__ = "form_responses"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    form_template_id = Column(Integer, nullable=False)
-    response_data = Column(Text, nullable=False)  # JSON data of form responses
-    submitted_by_email = Column(String(255), nullable=True)
-    submitted_by_name = Column(String(255), nullable=True)
-    ip_address = Column(String(45), nullable=True)  # IPv6 max length
-    user_agent = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 # Keep RSVPResponse for backward compatibility
@@ -166,24 +143,8 @@ class EventCreate(BaseModel):
     groom_name: Optional[str] = None  # Made optional for backward compatibility
     wedding_date: str
     location: str
-    invitation_message: Optional[str] = None
-
-class FormTemplateCreate(BaseModel):
-    name: str
-    description: Optional[str] = None
-    form_schema: str  # JSON string containing form field definitions
-    
-class FormTemplateUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    form_schema: Optional[str] = None
-    is_active: Optional[bool] = None
-
-class FormResponseCreate(BaseModel):
-    form_template_id: int
-    response_data: str  # JSON string containing form responses
-    submitted_by_email: Optional[str] = None
-    submitted_by_name: Optional[str] = None
+    google_maps_link: Optional[str] = None
+    custom_invitation_url: Optional[str] = None
 
 class RSVPCreate(BaseModel):
     event_id: int
@@ -641,6 +602,13 @@ async def create_event(event: EventCreate, db: Session = Depends(get_db)):
     if not user_exists:
         raise HTTPException(status_code=400, detail=f"User with ID {event.user_id} not found")
     
+    # Validate that event date is not before today
+    event_date = datetime.strptime(event.wedding_date, "%Y-%m-%d").date()
+    today = datetime.utcnow().date()
+    
+    if event_date < today:
+        raise HTTPException(status_code=400, detail="Event date cannot be before today")
+    
     # Validate that either event_name is provided OR both bride_name and groom_name are provided
     if not event.event_name and not (event.bride_name and event.groom_name):
         raise HTTPException(status_code=400, detail="Either event_name or both bride_name and groom_name must be provided")
@@ -653,7 +621,8 @@ async def create_event(event: EventCreate, db: Session = Depends(get_db)):
             groom_name=event.groom_name,
             wedding_date=event.wedding_date,
             location=event.location,
-            invitation_message=event.invitation_message
+            google_maps_link=event.google_maps_link,
+            custom_invitation_url=event.custom_invitation_url
         )
         db.add(db_event)
         db.commit()
@@ -665,11 +634,13 @@ async def create_event(event: EventCreate, db: Session = Depends(get_db)):
             "event": {
                 "id": db_event.id,
                 "user_id": db_event.user_id,
+                "event_name": db_event.event_name,
                 "bride_name": db_event.bride_name,
                 "groom_name": db_event.groom_name,
                 "wedding_date": db_event.wedding_date,
                 "location": db_event.location,
-                "invitation_message": db_event.invitation_message
+                "google_maps_link": db_event.google_maps_link,
+                "custom_invitation_url": db_event.custom_invitation_url
             }
         }
     except Exception as e:
@@ -717,7 +688,8 @@ async def get_events(user_id: Optional[int] = None, db: Session = Depends(get_db
             "groom_name": event.groom_name,
             "wedding_date": event.wedding_date,
             "location": event.location,
-            "invitation_message": event.invitation_message,
+            "google_maps_link": event.google_maps_link,
+            "custom_invitation_url": event.custom_invitation_url,
             "is_active": event.is_active,
             "created_at": event.created_at.isoformat()
         })
@@ -1253,216 +1225,6 @@ async def trigger_analytics_processing(db: Session = Depends(get_db)):
             "message": "Failed to process analytics"
         }
 
-# Form Template Management APIs
-@app.post("/api/admin/form-templates")
-async def create_form_template(form_template: FormTemplateCreate, db: Session = Depends(get_db)):
-    """Create a new form template"""
-    db_form_template = FormTemplate(
-        name=form_template.name,
-        description=form_template.description,
-        form_schema=form_template.form_schema,
-        created_by=1  # Default admin ID, should be from JWT token in production
-    )
-    db.add(db_form_template)
-    db.commit()
-    db.refresh(db_form_template)
-    
-    return {
-        "success": True,
-        "message": "Form template created successfully",
-        "form_template": {
-            "id": db_form_template.id,
-            "name": db_form_template.name,
-            "description": db_form_template.description,
-            "form_schema": db_form_template.form_schema,
-            "is_active": db_form_template.is_active,
-            "created_at": db_form_template.created_at.isoformat()
-        }
-    }
-
-@app.get("/api/admin/form-templates")
-async def get_form_templates(db: Session = Depends(get_db)):
-    """Get all form templates"""
-    templates = db.query(FormTemplate).all()
-    return {
-        "success": True,
-        "templates": [
-            {
-                "id": template.id,
-                "name": template.name,
-                "description": template.description,
-                "form_schema": template.form_schema,
-                "is_active": template.is_active,
-                "created_by": template.created_by,
-                "created_at": template.created_at.isoformat(),
-                "updated_at": template.updated_at.isoformat()
-            }
-            for template in templates
-        ]
-    }
-
-@app.get("/api/admin/form-templates/{template_id}")
-async def get_form_template(template_id: int, db: Session = Depends(get_db)):
-    """Get a specific form template"""
-    template = db.query(FormTemplate).filter(FormTemplate.id == template_id).first()
-    if not template:
-        raise HTTPException(status_code=404, detail="Form template not found")
-    
-    return {
-        "success": True,
-        "template": {
-            "id": template.id,
-            "name": template.name,
-            "description": template.description,
-            "form_schema": template.form_schema,
-            "is_active": template.is_active,
-            "created_by": template.created_by,
-            "created_at": template.created_at.isoformat(),
-            "updated_at": template.updated_at.isoformat()
-        }
-    }
-
-@app.put("/api/admin/form-templates/{template_id}")
-async def update_form_template(template_id: int, form_template: FormTemplateUpdate, db: Session = Depends(get_db)):
-    """Update a form template"""
-    db_template = db.query(FormTemplate).filter(FormTemplate.id == template_id).first()
-    if not db_template:
-        raise HTTPException(status_code=404, detail="Form template not found")
-    
-    if form_template.name is not None:
-        db_template.name = form_template.name
-    if form_template.description is not None:
-        db_template.description = form_template.description
-    if form_template.form_schema is not None:
-        db_template.form_schema = form_template.form_schema
-    if form_template.is_active is not None:
-        db_template.is_active = form_template.is_active
-    
-    db_template.updated_at = datetime.utcnow()
-    db.commit()
-    db.refresh(db_template)
-    
-    return {
-        "success": True,
-        "message": "Form template updated successfully"
-    }
-
-@app.delete("/api/admin/form-templates/{template_id}")
-async def delete_form_template(template_id: int, db: Session = Depends(get_db)):
-    """Delete a form template"""
-    db_template = db.query(FormTemplate).filter(FormTemplate.id == template_id).first()
-    if not db_template:
-        raise HTTPException(status_code=404, detail="Form template not found")
-    
-    db.delete(db_template)
-    db.commit()
-    
-    return {
-        "success": True,
-        "message": "Form template deleted successfully"
-    }
-
-# Form Response Management APIs
-@app.post("/api/forms/{template_id}/submit")
-async def submit_form_response(template_id: int, form_response: FormResponseCreate, db: Session = Depends(get_db)):
-    """Submit a form response (public endpoint)"""
-    # Verify template exists and is active
-    template = db.query(FormTemplate).filter(
-        FormTemplate.id == template_id,
-        FormTemplate.is_active == True
-    ).first()
-    
-    if not template:
-        raise HTTPException(status_code=404, detail="Form template not found or inactive")
-    
-    db_response = FormResponse(
-        form_template_id=template_id,
-        response_data=form_response.response_data,
-        submitted_by_email=form_response.submitted_by_email,
-        submitted_by_name=form_response.submitted_by_name
-    )
-    db.add(db_response)
-    db.commit()
-    db.refresh(db_response)
-    
-    return {
-        "success": True,
-        "message": "Form response submitted successfully",
-        "response_id": db_response.id
-    }
-
-@app.get("/api/admin/form-responses")
-async def get_all_form_responses(db: Session = Depends(get_db)):
-    """Get all form responses"""
-    responses = db.query(FormResponse).all()
-    return {
-        "success": True,
-        "responses": [
-            {
-                "id": response.id,
-                "form_template_id": response.form_template_id,
-                "response_data": response.response_data,
-                "submitted_by_email": response.submitted_by_email,
-                "submitted_by_name": response.submitted_by_name,
-                "created_at": response.created_at.isoformat()
-            }
-            for response in responses
-        ]
-    }
-
-@app.get("/api/admin/form-responses/{template_id}")
-async def get_form_responses_by_template(template_id: int, db: Session = Depends(get_db)):
-    """Get all responses for a specific form template"""
-    responses = db.query(FormResponse).filter(FormResponse.form_template_id == template_id).all()
-    return {
-        "success": True,
-        "template_id": template_id,
-        "responses": [
-            {
-                "id": response.id,
-                "response_data": response.response_data,
-                "submitted_by_email": response.submitted_by_email,
-                "submitted_by_name": response.submitted_by_name,
-                "created_at": response.created_at.isoformat()
-            }
-            for response in responses
-        ]
-    }
-
-@app.get("/api/admin/form-responses/response/{response_id}")
-async def get_form_response(response_id: int, db: Session = Depends(get_db)):
-    """Get a specific form response"""
-    response = db.query(FormResponse).filter(FormResponse.id == response_id).first()
-    if not response:
-        raise HTTPException(status_code=404, detail="Form response not found")
-    
-    return {
-        "success": True,
-        "response": {
-            "id": response.id,
-            "form_template_id": response.form_template_id,
-            "response_data": response.response_data,
-            "submitted_by_email": response.submitted_by_email,
-            "submitted_by_name": response.submitted_by_name,
-            "created_at": response.created_at.isoformat()
-        }
-    }
-
-@app.delete("/api/admin/form-responses/{response_id}")
-async def delete_form_response(response_id: int, db: Session = Depends(get_db)):
-    """Delete a form response"""
-    db_response = db.query(FormResponse).filter(FormResponse.id == response_id).first()
-    if not db_response:
-        raise HTTPException(status_code=404, detail="Form response not found")
-    
-    db.delete(db_response)
-    db.commit()
-    
-    return {
-        "success": True,
-        "message": "Form response deleted successfully"
-    }
-
 # Dashboard stats endpoint
 @app.get("/api/admin/stats")
 async def get_dashboard_stats(user_id: Optional[int] = None, db: Session = Depends(get_db)):
@@ -1472,17 +1234,12 @@ async def get_dashboard_stats(user_id: Optional[int] = None, db: Session = Depen
         total_events = db.query(Event).filter(Event.user_id == user_id).count()
         total_rsvps = db.query(RSVPResponse).join(Event, RSVPResponse.event_id == Event.id).filter(Event.user_id == user_id).count()
         active_events = db.query(Event).filter(Event.user_id == user_id, Event.is_active == True).count()
-        # Form templates and responses are not user-specific in current schema
-        total_form_templates = 0
-        total_form_responses = 0
     else:
         # Admin stats (all data)
         total_users = db.query(User).count()
         total_events = db.query(Event).count()
         total_rsvps = db.query(RSVPResponse).count()
         active_events = db.query(Event).filter(Event.is_active == True).count()
-        total_form_templates = db.query(FormTemplate).count()
-        total_form_responses = db.query(FormResponse).count()
     
     return {
         "success": True,
@@ -1490,9 +1247,7 @@ async def get_dashboard_stats(user_id: Optional[int] = None, db: Session = Depen
             "total_users": total_users,
             "total_events": total_events,
             "total_rsvps": total_rsvps,
-            "active_events": active_events,
-            "total_form_templates": total_form_templates,
-            "total_form_responses": total_form_responses
+            "active_events": active_events
         }
     }
 
