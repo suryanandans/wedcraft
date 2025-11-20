@@ -855,8 +855,6 @@
                             <th>S.No</th>
                             <th>Name</th>
                             <th>Email</th>
-                            <th>Role</th>
-                            <th>Events</th>
                             <th>Created</th>
                             <th>Actions</th>
                         </tr>
@@ -1974,8 +1972,6 @@
                     <td>${index + 1}</td>
                     <td>${user.name}</td>
                     <td>${user.email}</td>
-                    <td><span class="badge badge-${user.role}">${user.role}</span></td>
-                    <td>${user.events || 'No events'}</td>
                     <td>${new Date(user.created_at).toLocaleDateString()}</td>
                     <td>
                         <button class="btn btn-secondary btn-sm" onclick="editUser(${user.id})">
@@ -3863,7 +3859,7 @@ function filterRSVPEvents() {
                     regularUsers.forEach(user => {
                         const option = document.createElement('option');
                         option.value = user.id;
-                        option.textContent = `${user.name} (${user.email}) - ${user.role}`;
+                        option.textContent = `${user.name} (${user.email})`;
                         userSelect.appendChild(option);
                     });
                 }
