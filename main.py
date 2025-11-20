@@ -60,9 +60,7 @@ class Event(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=False)
-    event_name = Column(String(255), nullable=True)  # New field for generic event names
-    bride_name = Column(String(255), nullable=True)  # Made nullable for backward compatibility
-    groom_name = Column(String(255), nullable=True)  # Made nullable for backward compatibility
+    event_name = Column(String(255), nullable=False)
     wedding_date = Column(String(20), nullable=False)
     location = Column(String(500), nullable=False)
     google_maps_link = Column(String(1000), nullable=True)
@@ -146,9 +144,7 @@ class AdminLogin(BaseModel):
 
 class EventCreate(BaseModel):
     user_id: int
-    event_name: Optional[str] = None  # New field for generic event names
-    bride_name: Optional[str] = None  # Made optional for backward compatibility
-    groom_name: Optional[str] = None  # Made optional for backward compatibility
+    event_name: str
     wedding_date: str
     location: str
     google_maps_link: Optional[str] = None
@@ -157,8 +153,6 @@ class EventCreate(BaseModel):
 class EventUpdate(BaseModel):
     user_id: Optional[int] = None
     event_name: Optional[str] = None
-    bride_name: Optional[str] = None
-    groom_name: Optional[str] = None
     wedding_date: Optional[str] = None
     location: Optional[str] = None
     google_maps_link: Optional[str] = None
@@ -299,6 +293,10 @@ async def enhanced_rsvp_form_page():
 @app.get("/test_form.html")
 async def test_form_page():
     return FileResponse(Path("test_form.html"), media_type="text/html")
+
+@app.get("/test_form_improved.html")
+async def test_form_improved_page():
+    return FileResponse(Path("test_form_improved.html"), media_type="text/html")
 
 # Authentication endpoints
 @app.post("/api/login")
@@ -675,16 +673,14 @@ async def create_event(event: EventCreate, db: Session = Depends(get_db)):
     if event_date < today:
         raise HTTPException(status_code=400, detail="Event date cannot be before today")
     
-    # Validate that either event_name is provided OR both bride_name and groom_name are provided
-    if not event.event_name and not (event.bride_name and event.groom_name):
-        raise HTTPException(status_code=400, detail="Either event_name or both bride_name and groom_name must be provided")
+    # Validate that event_name is provided
+    if not event.event_name:
+        raise HTTPException(status_code=400, detail="Event name is required")
     
     try:
         db_event = Event(
             user_id=actual_user_id,
             event_name=event.event_name,
-            bride_name=event.bride_name,
-            groom_name=event.groom_name,
             wedding_date=event.wedding_date,
             location=event.location,
             google_maps_link=event.google_maps_link,
@@ -701,8 +697,6 @@ async def create_event(event: EventCreate, db: Session = Depends(get_db)):
                 "id": db_event.id,
                 "user_id": db_event.user_id,
                 "event_name": db_event.event_name,
-                "bride_name": db_event.bride_name,
-                "groom_name": db_event.groom_name,
                 "wedding_date": db_event.wedding_date,
                 "location": db_event.location,
                 "google_maps_link": db_event.google_maps_link,
@@ -739,8 +733,6 @@ async def get_event(event_id: int, db: Session = Depends(get_db)):
                 "id": db_event.id,
                 "user_id": db_event.user_id,
                 "event_name": db_event.event_name,
-                "bride_name": db_event.bride_name,
-                "groom_name": db_event.groom_name,
                 "wedding_date": db_event.wedding_date,
                 "location": db_event.location,
                 "google_maps_link": db_event.google_maps_link,
@@ -783,12 +775,6 @@ async def update_event(event_id: int, event_update: EventUpdate, db: Session = D
         if event_update.event_name is not None:
             db_event.event_name = event_update.event_name
         
-        if event_update.bride_name is not None:
-            db_event.bride_name = event_update.bride_name
-        
-        if event_update.groom_name is not None:
-            db_event.groom_name = event_update.groom_name
-        
         if event_update.wedding_date is not None:
             # Validate that event date is not before today
             event_date = datetime.strptime(event_update.wedding_date, "%Y-%m-%d").date()
@@ -808,9 +794,9 @@ async def update_event(event_id: int, event_update: EventUpdate, db: Session = D
         if event_update.custom_invitation_url is not None:
             db_event.custom_invitation_url = event_update.custom_invitation_url
         
-        # Validate that either event_name is provided OR both bride_name and groom_name are provided
-        if not db_event.event_name and not (db_event.bride_name and db_event.groom_name):
-            raise HTTPException(status_code=400, detail="Either event_name or both bride_name and groom_name must be provided")
+        # Validate that event_name is provided
+        if not db_event.event_name:
+            raise HTTPException(status_code=400, detail="Event name is required")
         
         db.commit()
         db.refresh(db_event)
@@ -822,8 +808,6 @@ async def update_event(event_id: int, event_update: EventUpdate, db: Session = D
                 "id": db_event.id,
                 "user_id": db_event.user_id,
                 "event_name": db_event.event_name,
-                "bride_name": db_event.bride_name,
-                "groom_name": db_event.groom_name,
                 "wedding_date": db_event.wedding_date,
                 "location": db_event.location,
                 "google_maps_link": db_event.google_maps_link,
@@ -889,8 +873,6 @@ async def get_events(user_id: Optional[int] = None, db: Session = Depends(get_db
             "user_email": user_email,
             "user_role": user_role,
             "event_name": event.event_name,
-            "bride_name": event.bride_name,
-            "groom_name": event.groom_name,
             "wedding_date": event.wedding_date,
             "location": event.location,
             "google_maps_link": event.google_maps_link,
@@ -1006,8 +988,6 @@ async def get_event_details(event_id: int, db: Session = Depends(get_db)):
             "event": {
                 "id": event.id,
                 "event_name": event.event_name,
-                "bride_name": event.bride_name,
-                "groom_name": event.groom_name,
                 "wedding_date": event.wedding_date,
                 "location": event.location,
                 "google_maps_link": event.google_maps_link,
@@ -1385,7 +1365,7 @@ async def get_rsvp_responses(user_id: Optional[int] = None, db: Session = Depend
         event = db.query(Event).filter(Event.id == response.event_id).first()
         event_name = None
         if event:
-            event_name = f"{event.bride_name} & {event.groom_name}"
+            event_name = event.event_name
         
         response_list.append({
             "id": response.id,
@@ -1422,7 +1402,7 @@ async def get_enhanced_rsvp_responses(user_id: Optional[int] = None, db: Session
         event = db.query(Event).filter(Event.id == response.event_id).first()
         event_name = None
         if event:
-            event_name = f"{event.bride_name} & {event.groom_name}" if event.bride_name and event.groom_name else event.event_name
+            event_name = event.event_name
         
         # Get family members for this RSVP
         family_members = db.query(FamilyMember).filter(FamilyMember.rsvp_response_id == response.id).all()
@@ -1471,7 +1451,7 @@ async def get_processed_analytics(user_id: Optional[int] = None, db: Session = D
             event = db.query(Event).filter(Event.id == analytic.event_id).first()
             event_name = None
             if event:
-                event_name = f"{event.bride_name} & {event.groom_name}"
+                event_name = event.event_name
             
             # Parse recommendations JSON
             recommendations = []
