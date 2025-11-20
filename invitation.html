@@ -443,6 +443,16 @@
             });
         }
 
+        // Helper function to get event display name
+        function getEventDisplayName(event) {
+            if (event.event_name) {
+                return event.event_name;
+            } else if (event.bride_name && event.groom_name) {
+                return `${event.bride_name} & ${event.groom_name}`;
+            }
+            return 'Event';
+        }
+
         // Load events for selection
         async function loadEvents() {
             try {
@@ -456,7 +466,7 @@
                     data.events.forEach(event => {
                         const option = document.createElement('option');
                         option.value = event.id;
-                        option.textContent = `${event.bride_name} & ${event.groom_name} - ${event.wedding_date}`;
+                        option.textContent = `${getEventDisplayName(event)} - ${event.wedding_date}`;
                         eventSelect.appendChild(option);
                     });
                 }
@@ -476,13 +486,14 @@
                 // Pre-populate the event ID in the form
                 const eventSelect = document.getElementById('rsvpEventId');
                 if (eventSelect) {
-                    eventSelect.innerHTML = `<option value="${event.id}" selected>${event.bride_name} & ${event.groom_name} - ${event.wedding_date}</option>`;
+                    const eventDisplayName = getEventDisplayName(event);
+                    eventSelect.innerHTML = `<option value="${event.id}" selected>${eventDisplayName} - ${event.wedding_date}</option>`;
                     eventSelect.style.display = 'none'; // Hide the dropdown since event is pre-selected
                     
                     // Add a display element to show the selected event
                     const eventDisplay = document.createElement('div');
                     eventDisplay.style.cssText = 'padding: 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px; font-weight: 600; color: #333;';
-                    eventDisplay.innerHTML = `<i class="fas fa-heart" style="color: #667eea; margin-right: 8px;"></i>Selected Event: ${event.bride_name} & ${event.groom_name} - ${event.wedding_date}`;
+                    eventDisplay.innerHTML = `<i class="fas fa-heart" style="color: #667eea; margin-right: 8px;"></i>Selected Event: ${eventDisplayName} - ${event.wedding_date}`;
                     eventSelect.parentNode.insertBefore(eventDisplay, eventSelect);
                 }
             } else {
@@ -496,7 +507,7 @@
             // Update hero section
             const heroTitle = document.querySelector('.hero-title');
             if (heroTitle) {
-                heroTitle.innerHTML = `💍 ${event.bride_name} & ${event.groom_name}`;
+                heroTitle.innerHTML = `💍 ${getEventDisplayName(event)}`;
             }
 
             // Update save the date section
@@ -535,9 +546,10 @@
                 content = content.replace(/Grand Palace Hotel, Mumbai/g, `<strong>${event.location}</strong>`);
                 
                 // Replace generic couple references with actual names
+                const eventDisplayName = getEventDisplayName(event);
                 if (content.includes('we are getting married') || content.includes('we\'re getting married')) {
-                    content = content.replace(/we are getting married/g, `${event.bride_name} & ${event.groom_name} are getting married`);
-                    content = content.replace(/we're getting married/g, `${event.bride_name} & ${event.groom_name} are getting married`);
+                    content = content.replace(/we are getting married/g, `${eventDisplayName} are getting married`);
+                    content = content.replace(/we're getting married/g, `${eventDisplayName} are getting married`);
                 }
                 
                 card.innerHTML = content;

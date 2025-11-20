@@ -791,11 +791,11 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>S.No</th>
                             <th>Name</th>
                             <th>Email</th>
                             <th>Role</th>
-                            <th>Wedding Date</th>
+                            <th>Events</th>
                             <th>Created</th>
                             <th>Actions</th>
                         </tr>
@@ -822,7 +822,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>S.No</th>
                             <th>Name</th>
                             <th>Email</th>
                             <th>Role</th>
@@ -904,8 +904,9 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>User</th>
+                            <th>S.No</th>
+                            <th>Event Name</th>
+                            <th class="admin-only-column">User</th>
                             <th>Event Date</th>
                             <th>Location</th>
                             <th>Created</th>
@@ -1170,11 +1171,11 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Google Maps Location Link</label>
-                    <input type="url" class="form-input" id="googleMapsLink" placeholder="https://maps.google.com/..." required>
+                    <input type="url" class="form-input" id="googleMapsLink" placeholder="https://maps.google.com/...">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Custom Invitation Page URL</label>
-                    <input type="url" class="form-input" id="customInvitationUrl" placeholder="https://yoursite.com/invitation" required>
+                    <input type="url" class="form-input" id="customInvitationUrl" placeholder="https://yoursite.com/invitation">
                 </div>
                 <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px;">
                     <button type="button" class="btn btn-secondary" onclick="closeCreateEventModal()">Cancel</button>
@@ -1298,6 +1299,13 @@
                     window.location.href = 'login.html';
                     return;
                 }
+            }
+            
+            // Add admin-user class to body if user is admin
+            if (userType === 'admin' || sessionStorage.getItem('adminLoggedIn')) {
+                document.body.classList.add('admin-user');
+            } else {
+                document.body.classList.remove('admin-user');
             }
             
             // Update UI based on user type
@@ -1745,14 +1753,14 @@
             const tbody = document.getElementById('usersTableBody');
             tbody.innerHTML = '';
 
-            users.forEach(user => {
+            users.forEach((user, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${user.id}</td>
+                    <td>${index + 1}</td>
                     <td>${user.name}</td>
                     <td>${user.email}</td>
                     <td><span class="badge badge-${user.role}">${user.role}</span></td>
-                    <td>${user.wedding_date || 'N/A'}</td>
+                    <td>${user.events || 'No events'}</td>
                     <td>${new Date(user.created_at).toLocaleDateString()}</td>
                     <td>
                         <button class="btn btn-secondary btn-sm" onclick="editUser(${user.id})">
@@ -1789,10 +1797,10 @@
             const tbody = document.getElementById('adminTableBody');
             tbody.innerHTML = '';
 
-            adminUsers.forEach(user => {
+            adminUsers.forEach((user, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${user.id}</td>
+                    <td>${index + 1}</td>
                     <td>${user.name}</td>
                     <td>${user.email}</td>
                     <td><span class="badge badge-admin">${user.role}</span></td>
@@ -1992,13 +2000,16 @@
         function renderEventsTable(eventsToRender = events) {
             const tbody = document.getElementById('eventsTableBody');
             tbody.innerHTML = '';
+            
+            const admin = isAdmin();
+            const colspanCount = admin ? 7 : 6;
 
             if (eventsToRender.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">No events found</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="${colspanCount}" style="text-align: center; color: #666;">No events found</td></tr>`;
                 return;
             }
 
-            eventsToRender.forEach(event => {
+            eventsToRender.forEach((event, index) => {
                 const row = document.createElement('tr');
                 // Use user name and email if available, otherwise show user ID
                 let userInfo = event.user_name || `User ID: ${event.user_id}`;
@@ -2006,9 +2017,13 @@
                     userInfo += ` (${event.user_email})`;
                 }
                 
+                // Get event display name
+                const eventName = getEventDisplayName(event);
+                
                 row.innerHTML = `
-                    <td>${event.id}</td>
-                    <td>${userInfo}</td>
+                    <td>${index + 1}</td>
+                    <td>${eventName}</td>
+                    ${admin ? `<td class="admin-only-column">${userInfo}</td>` : ''}
                     <td>${event.wedding_date}</td>
                     <td>${event.location}</td>
                     <td>${new Date(event.created_at).toLocaleDateString()}</td>
@@ -2017,7 +2032,7 @@
                             <button class="btn btn-secondary btn-sm" onclick="viewEvent(${event.id})" title="View Event">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            ${isAdmin() ? `
+                            ${admin ? `
                             <button class="btn btn-secondary btn-sm" onclick="editEvent(${event.id})" title="Edit Event">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -3129,9 +3144,27 @@
         }
 
         // View event
-        function viewEvent(eventId) {
-            // TODO: Implement view event functionality
-            console.log('View event:', eventId);
+        async function viewEvent(eventId) {
+            try {
+                // Fetch event details to get custom invitation URL
+                const response = await fetch(`/api/admin/events/${eventId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch event details');
+                }
+                
+                const data = await response.json();
+                const event = data.event;
+                
+                // Redirect to custom invitation URL if available
+                if (event.custom_invitation_url) {
+                    window.open(event.custom_invitation_url, '_blank');
+                } else {
+                    showAlert('eventAlert', 'No custom invitation URL set for this event', 'info');
+                }
+            } catch (error) {
+                console.error('Error viewing event:', error);
+                showAlert('eventAlert', 'Error loading event details', 'error');
+            }
         }
 
         // Delete event
@@ -3575,11 +3608,31 @@
         }
 
         function selectInvitationEvent(event) {
-            // Store selected event data in localStorage for the invitation page
+            console.log('selectInvitationEvent called with event:', event);
+            console.log('custom_invitation_url:', event.custom_invitation_url);
+            
+            // Store selected event data in localStorage for both custom and default pages
             localStorage.setItem('selectedEvent', JSON.stringify(event));
             
-            // Redirect to the invitation page
-            window.location.href = 'invitation.html';
+            // Check if custom invitation URL exists and is not empty
+            if (event.custom_invitation_url && event.custom_invitation_url.trim() !== '') {
+                console.log('Redirecting to custom invitation URL:', event.custom_invitation_url);
+                
+                // Check if URL already has parameters
+                const url = new URL(event.custom_invitation_url, window.location.origin);
+                
+                // Add event_id as URL parameter if not already present
+                if (!url.searchParams.has('event_id')) {
+                    url.searchParams.set('event_id', event.id);
+                }
+                
+                // Redirect to custom invitation URL with event_id
+                window.open(url.toString(), '_blank');
+            } else {
+                console.log('No custom invitation URL, using default invitation.html');
+                // Redirect to the default invitation page
+                window.location.href = 'invitation.html';
+            }
         }
 
         // Note: Dynamic invitation content functions removed since we now redirect to invitation.html
@@ -3630,6 +3683,11 @@
             font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
+        }
+        
+        /* Hide admin-only columns for non-admin users */
+        body:not(.admin-user) .admin-only-column {
+            display: none;
         }
 
         .badge-user {
