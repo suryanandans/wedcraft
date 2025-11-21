@@ -7,6 +7,7 @@ This script creates the database tables and populates them with initial data
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from main import Base, User, Admin, Event, RSVPResponse, get_password_hash
+import uuid
 from datetime import datetime
 
 # Database configuration
@@ -30,6 +31,7 @@ def init_database():
         admin = db.query(Admin).filter(Admin.email == "admin@wedcraft.com").first()
         if not admin:
             admin = Admin(
+                id=str(uuid.uuid4()),
                 name="WedCraft Admin",
                 email="admin@wedcraft.com",
                 hashed_password=get_password_hash("admin123"),
@@ -69,6 +71,7 @@ def init_database():
             existing_user = db.query(User).filter(User.email == user_data["email"]).first()
             if not existing_user:
                 user = User(
+                    id=str(uuid.uuid4()),
                     name=user_data["name"],
                     email=user_data["email"],
                     hashed_password=get_password_hash(user_data["password"]),
@@ -85,11 +88,9 @@ def init_database():
             if not existing_event:
                 event = Event(
                     user_id=user.id,
-                    bride_name="Sarah Johnson",
-                    groom_name="John Smith",
+                    event_name="John & Sarah's Wedding",
                     wedding_date="2024-06-15",
-                    location="Grand Palace Hotel, Mumbai",
-                    invitation_message="We would be honored to have you celebrate this special day with us as we begin our journey together as husband and wife."
+                    location="Grand Palace Hotel, Mumbai"
                 )
                 db.add(event)
                 print("✅ Sample wedding event created")

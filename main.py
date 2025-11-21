@@ -4,9 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Text
+from sqlalchemy.dialects.mysql import CHAR
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel, EmailStr
+from uuid import UUID
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from typing import Optional, List
@@ -35,7 +37,7 @@ security = HTTPBearer()
 class User(Base):
     __tablename__ = "users"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(CHAR(36), primary_key=True, index=True)
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
@@ -47,7 +49,7 @@ class User(Base):
 class Admin(Base):
     __tablename__ = "admins"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(CHAR(36), primary_key=True, index=True)
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
@@ -59,7 +61,7 @@ class Event(Base):
     __tablename__ = "events"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, nullable=False)
+    user_id = Column(CHAR(36), nullable=False)
     event_name = Column(String(255), nullable=False)
     wedding_date = Column(String(20), nullable=False)
     location = Column(String(500), nullable=False)
@@ -143,7 +145,7 @@ class AdminLogin(BaseModel):
     password: str
 
 class EventCreate(BaseModel):
-    user_id: int
+    user_id: str  # UUID as string
     event_name: str
     wedding_date: str
     location: str
@@ -151,7 +153,7 @@ class EventCreate(BaseModel):
     custom_invitation_url: Optional[str] = None
 
 class EventUpdate(BaseModel):
-    user_id: Optional[int] = None
+    user_id: Optional[str] = None  # UUID as string
     event_name: Optional[str] = None
     wedding_date: Optional[str] = None
     location: Optional[str] = None
@@ -254,6 +256,7 @@ def create_default_admin(db: Session):
     if not admin:
         hashed_password = get_password_hash("admin123")
         admin = Admin(
+            id=str(uuid.uuid4()),  # Generate UUID for new admin
             name="WedCraft Admin",
             email="admin@wedcraft.com",
             hashed_password=hashed_password,
@@ -309,7 +312,7 @@ async def unified_login(user_login: UserLogin, db: Session = Depends(get_db)):
     if admin:
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
-            data={"sub": admin.email, "type": "admin", "user_id": admin.id},
+            data={"sub": admin.email, "type": "admin", "user_id": str(admin.id)},
             expires_delta=access_token_expires
         )
         
@@ -318,7 +321,7 @@ async def unified_login(user_login: UserLogin, db: Session = Depends(get_db)):
             "access_token": access_token,
             "token_type": "bearer",
             "user": {
-                "id": admin.id,
+                "id": str(admin.id),
                 "name": admin.name,
                 "email": admin.email,
                 "role": "admin",
@@ -333,7 +336,7 @@ async def unified_login(user_login: UserLogin, db: Session = Depends(get_db)):
     if user:
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
-            data={"sub": user.email, "type": "user", "user_id": user.id},
+            data={"sub": user.email, "type": "user", "user_id": str(user.id)},
             expires_delta=access_token_expires
         )
         
@@ -342,7 +345,7 @@ async def unified_login(user_login: UserLogin, db: Session = Depends(get_db)):
             "access_token": access_token,
             "token_type": "bearer",
             "user": {
-                "id": user.id,
+                "id": str(user.id),
                 "name": user.name,
                 "email": user.email,
                 "role": user.role,
@@ -370,7 +373,7 @@ async def login_user(user_login: UserLogin, db: Session = Depends(get_db)):
     
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.email, "type": "user", "user_id": user.id},
+        data={"sub": user.email, "type": "user", "user_id": str(user.id)},
         expires_delta=access_token_expires
     )
     
@@ -379,7 +382,7 @@ async def login_user(user_login: UserLogin, db: Session = Depends(get_db)):
         "access_token": access_token,
         "token_type": "bearer",
         "user": {
-            "id": user.id,
+            "id": str(user.id),
             "name": user.name,
             "email": user.email,
             "role": user.role,
@@ -398,7 +401,7 @@ async def login_admin(admin_login: AdminLogin, db: Session = Depends(get_db)):
     
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": admin.email, "type": "admin", "admin_id": admin.id},
+        data={"sub": admin.email, "type": "admin", "admin_id": str(admin.id)},
         expires_delta=access_token_expires
     )
     
@@ -407,7 +410,7 @@ async def login_admin(admin_login: AdminLogin, db: Session = Depends(get_db)):
         "access_token": access_token,
         "token_type": "bearer",
         "admin": {
-            "id": admin.id,
+            "id": str(admin.id),
             "name": admin.name,
             "email": admin.email,
             "role": admin.role
@@ -425,6 +428,7 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     # Create new user
     hashed_password = get_password_hash(user.password)
     db_user = User(
+        id=str(uuid.uuid4()),  # Generate UUID for new user
         name=user.name,
         email=user.email,
         hashed_password=hashed_password,
@@ -439,7 +443,7 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
         "success": True,
         "message": "User created successfully",
         "user": {
-            "id": db_user.id,
+            "id": str(db_user.id),
             "name": db_user.name,
             "email": db_user.email,
             "role": db_user.role,
@@ -448,7 +452,7 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     }
 
 @app.get("/api/admin/users")
-async def get_users(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+async def get_users(user_id: Optional[str] = None, db: Session = Depends(get_db)):
     # If user_id is provided, return only that specific user (for regular user access)
     if user_id:
         # First check regular users
@@ -457,7 +461,7 @@ async def get_users(user_id: Optional[int] = None, db: Session = Depends(get_db)
             return {
                 "success": True,
                 "users": [{
-                    "id": user.id,
+                    "id": str(user.id),
                     "name": user.name,
                     "email": user.email,
                     "role": user.role,
@@ -468,24 +472,22 @@ async def get_users(user_id: Optional[int] = None, db: Session = Depends(get_db)
                 }]
             }
         
-        # Check admin users (with offset)
-        if user_id >= 10000:
-            admin_id = user_id - 10000
-            admin = db.query(Admin).filter(Admin.id == admin_id).first()
-            if admin:
-                return {
-                    "success": True,
-                    "users": [{
-                        "id": admin.id + 10000,
-                        "name": admin.name,
-                        "email": admin.email,
-                        "role": admin.role,
-                        "wedding_date": None,
-                        "is_active": admin.is_active,
-                        "created_at": admin.created_at.isoformat(),
-                        "user_type": "admin"
-                    }]
-                }
+        # Check admin users
+        admin = db.query(Admin).filter(Admin.id == user_id).first()
+        if admin:
+            return {
+                "success": True,
+                "users": [{
+                    "id": str(admin.id),
+                    "name": admin.name,
+                    "email": admin.email,
+                    "role": admin.role,
+                    "wedding_date": None,
+                    "is_active": admin.is_active,
+                    "created_at": admin.created_at.isoformat(),
+                    "user_type": "admin"
+                }]
+            }
         
         return {"success": True, "users": []}
     
@@ -494,7 +496,7 @@ async def get_users(user_id: Optional[int] = None, db: Session = Depends(get_db)
     users = db.query(User).filter(User.role == "user").all()
     user_list = [
         {
-            "id": user.id,
+            "id": str(user.id),
             "name": user.name,
             "email": user.email,
             "role": user.role,
@@ -518,7 +520,7 @@ async def get_admins(db: Session = Depends(get_db)):
         "success": True,
         "admins": [
             {
-                "id": admin.id,
+                "id": str(admin.id),
                 "name": admin.name,
                 "email": admin.email,
                 "role": admin.role,
@@ -530,7 +532,7 @@ async def get_admins(db: Session = Depends(get_db)):
     }
 
 @app.put("/api/admin/users/{user_id}")
-async def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get_db)):
+async def update_user(user_id: str, user_update: UserUpdate, db: Session = Depends(get_db)):
     """Update a user's information"""
     try:
         # Find the user
@@ -573,7 +575,7 @@ async def update_user(user_id: int, user_update: UserUpdate, db: Session = Depen
             "success": True,
             "message": "User updated successfully",
             "user": {
-                "id": db_user.id,
+                "id": str(db_user.id),
                 "name": db_user.name,
                 "email": db_user.email,
                 "role": db_user.role,
@@ -588,7 +590,7 @@ async def update_user(user_id: int, user_update: UserUpdate, db: Session = Depen
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 @app.delete("/api/admin/users/{user_id}")
-async def delete_user(user_id: int, db: Session = Depends(get_db)):
+async def delete_user(user_id: str, db: Session = Depends(get_db)):
     """Delete a user (handles both regular users and admins)"""
     try:
         # First, try to find in regular users table
@@ -611,31 +613,29 @@ async def delete_user(user_id: int, db: Session = Depends(get_db)):
                 "message": "User deleted successfully"
             }
         
-        # If not found in users, check if this is an admin user (with offset)
-        if user_id >= 10000:
-            admin_id = user_id - 10000
-            db_admin = db.query(Admin).filter(Admin.id == admin_id).first()
+        # If not found in users, check if this is an admin user
+        db_admin = db.query(Admin).filter(Admin.id == user_id).first()
+        
+        if db_admin:
+            # Check if this is the last admin
+            admin_count = db.query(Admin).count()
+            if admin_count <= 1:
+                raise HTTPException(status_code=400, detail="Cannot delete the last admin user")
             
-            if db_admin:
-                # Check if this is the last admin
-                admin_count = db.query(Admin).count()
-                if admin_count <= 1:
-                    raise HTTPException(status_code=400, detail="Cannot delete the last admin user")
-                
-                # Check if admin has associated events
-                admin_events = db.query(Event).filter(Event.user_id == admin_id).count()
-                if admin_events > 0:
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Cannot delete admin. Admin has {admin_events} associated events. Delete events first."
-                    )
-                
-                db.delete(db_admin)
-                db.commit()
-                return {
-                    "success": True,
-                    "message": "Admin user deleted successfully"
-                }
+            # Check if admin has associated events
+            admin_events = db.query(Event).filter(Event.user_id == user_id).count()
+            if admin_events > 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Cannot delete admin. Admin has {admin_events} associated events. Delete events first."
+                )
+            
+            db.delete(db_admin)
+            db.commit()
+            return {
+                "success": True,
+                "message": "Admin user deleted successfully"
+            }
         
         # If not found in either table
         raise HTTPException(status_code=404, detail="User not found")
@@ -649,19 +649,10 @@ async def delete_user(user_id: int, db: Session = Depends(get_db)):
 # Event management endpoints
 @app.post("/api/admin/create-event")
 async def create_event(event: EventCreate, db: Session = Depends(get_db)):
-    # Validate that user exists (check both regular users and admins with offset)
-    user_exists = None
-    actual_user_id = event.user_id
-    
-    if event.user_id >= 10000:
-        # This is an admin user (with offset)
-        admin_id = event.user_id - 10000
-        user_exists = db.query(Admin).filter(Admin.id == admin_id).first()
-        # For events, we'll store the actual admin ID without offset
-        actual_user_id = admin_id
-    else:
-        # This is a regular user
-        user_exists = db.query(User).filter(User.id == event.user_id).first()
+    # Validate that user exists (check both regular users and admins)
+    user_exists = db.query(User).filter(User.id == event.user_id).first()
+    if not user_exists:
+        user_exists = db.query(Admin).filter(Admin.id == event.user_id).first()
     
     if not user_exists:
         raise HTTPException(status_code=400, detail=f"User with ID {event.user_id} not found")
@@ -679,7 +670,7 @@ async def create_event(event: EventCreate, db: Session = Depends(get_db)):
     
     try:
         db_event = Event(
-            user_id=actual_user_id,
+            user_id=event.user_id,
             event_name=event.event_name,
             wedding_date=event.wedding_date,
             location=event.location,
@@ -695,7 +686,7 @@ async def create_event(event: EventCreate, db: Session = Depends(get_db)):
             "message": "Event created successfully",
             "event": {
                 "id": db_event.id,
-                "user_id": db_event.user_id,
+                "user_id": str(db_event.user_id),
                 "event_name": db_event.event_name,
                 "wedding_date": db_event.wedding_date,
                 "location": db_event.location,
@@ -731,7 +722,7 @@ async def get_event(event_id: int, db: Session = Depends(get_db)):
             "success": True,
             "event": {
                 "id": db_event.id,
-                "user_id": db_event.user_id,
+                "user_id": str(db_event.user_id),
                 "event_name": db_event.event_name,
                 "wedding_date": db_event.wedding_date,
                 "location": db_event.location,
@@ -757,20 +748,14 @@ async def update_event(event_id: int, event_update: EventUpdate, db: Session = D
         # Update fields if provided
         if event_update.user_id is not None:
             # Validate that user exists
-            user_exists = None
-            actual_user_id = event_update.user_id
-            
-            if event_update.user_id >= 10000:
-                admin_id = event_update.user_id - 10000
-                user_exists = db.query(Admin).filter(Admin.id == admin_id).first()
-                actual_user_id = admin_id
-            else:
-                user_exists = db.query(User).filter(User.id == event_update.user_id).first()
+            user_exists = db.query(User).filter(User.id == event_update.user_id).first()
+            if not user_exists:
+                user_exists = db.query(Admin).filter(Admin.id == event_update.user_id).first()
             
             if not user_exists:
                 raise HTTPException(status_code=400, detail=f"User with ID {event_update.user_id} not found")
             
-            db_event.user_id = actual_user_id
+            db_event.user_id = event_update.user_id
         
         if event_update.event_name is not None:
             db_event.event_name = event_update.event_name
@@ -806,7 +791,7 @@ async def update_event(event_id: int, event_update: EventUpdate, db: Session = D
             "message": "Event updated successfully",
             "event": {
                 "id": db_event.id,
-                "user_id": db_event.user_id,
+                "user_id": str(db_event.user_id),
                 "event_name": db_event.event_name,
                 "wedding_date": db_event.wedding_date,
                 "location": db_event.location,
@@ -821,7 +806,7 @@ async def update_event(event_id: int, event_update: EventUpdate, db: Session = D
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 @app.get("/api/admin/events")
-async def get_events(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+async def get_events(user_id: Optional[str] = None, db: Session = Depends(get_db)):
     # If user_id is provided, return only events for that specific user
     if user_id:
         events = db.query(Event).filter(Event.user_id == user_id).all()
@@ -868,7 +853,7 @@ async def get_events(user_id: Optional[int] = None, db: Session = Depends(get_db
         
         events_with_users.append({
             "id": event.id,
-            "user_id": event.user_id,
+            "user_id": str(event.user_id),
             "user_name": user_name or f"User ID: {event.user_id}",
             "user_email": user_email,
             "user_role": user_role,
@@ -993,6 +978,7 @@ async def get_event_details(event_id: int, db: Session = Depends(get_db)):
                 "google_maps_link": event.google_maps_link,
                 "custom_invitation_url": event.custom_invitation_url,
                 "user_name": user_name,
+                "user_id": str(event.user_id),
                 "is_active": event.is_active,
                 "created_at": event.created_at.isoformat()
             }
@@ -1350,7 +1336,7 @@ async def submit_enhanced_rsvp(rsvp: EnhancedRSVPSubmission, db: Session = Depen
         raise HTTPException(status_code=500, detail=f"Failed to submit RSVP: {str(e)}")
 
 @app.get("/api/admin/rsvp-responses")
-async def get_rsvp_responses(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+async def get_rsvp_responses(user_id: Optional[str] = None, db: Session = Depends(get_db)):
     if user_id:
         # Filter RSVP responses for specific user's events
         responses = db.query(RSVPResponse).join(Event, RSVPResponse.event_id == Event.id).filter(Event.user_id == user_id).all()
@@ -1386,7 +1372,7 @@ async def get_rsvp_responses(user_id: Optional[int] = None, db: Session = Depend
 
 # Enhanced RSVP responses with family member details
 @app.get("/api/admin/enhanced-rsvp-responses")
-async def get_enhanced_rsvp_responses(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+async def get_enhanced_rsvp_responses(user_id: Optional[str] = None, db: Session = Depends(get_db)):
     """Get RSVP responses with detailed family member information"""
     if user_id:
         # Filter RSVP responses for specific user's events
@@ -1434,7 +1420,7 @@ async def get_enhanced_rsvp_responses(user_id: Optional[int] = None, db: Session
 
 # Processed Analytics endpoints
 @app.get("/api/admin/processed-analytics")
-async def get_processed_analytics(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+async def get_processed_analytics(user_id: Optional[str] = None, db: Session = Depends(get_db)):
     """Get processed analytics data from count.py processing"""
     try:
         if user_id:
@@ -1514,7 +1500,7 @@ async def trigger_analytics_processing(db: Session = Depends(get_db)):
 
 # Dashboard stats endpoint
 @app.get("/api/admin/stats")
-async def get_dashboard_stats(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+async def get_dashboard_stats(user_id: Optional[str] = None, db: Session = Depends(get_db)):
     # Get today's date for filtering upcoming events
     today = datetime.utcnow().date()
     

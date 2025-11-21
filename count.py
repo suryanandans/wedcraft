@@ -414,17 +414,17 @@ class WeddingAnalytics:
             cursor.execute("SELECT COUNT(*) FROM rsvp_responses")
             stats["total_rsvp_responses"] = cursor.fetchone()[0]
             
-            # Form responses count
-            cursor.execute("SELECT COUNT(*) FROM form_responses")
+            # Form responses count (using family_members as alternative)
+            cursor.execute("SELECT COUNT(*) FROM family_members")
             stats["total_form_responses"] = cursor.fetchone()[0]
             
             # Recent activity (last 7 days)
             week_ago = (datetime.now() - timedelta(days=7)).isoformat()
             
-            cursor.execute("SELECT COUNT(*) FROM rsvp_responses WHERE created_at > ?", (week_ago,))
+            cursor.execute("SELECT COUNT(*) FROM rsvp_responses WHERE created_at > %s", (week_ago,))
             stats["recent_rsvp_responses"] = cursor.fetchone()[0]
             
-            cursor.execute("SELECT COUNT(*) FROM form_responses WHERE created_at > ?", (week_ago,))
+            cursor.execute("SELECT COUNT(*) FROM family_members WHERE created_at > %s", (week_ago,))
             stats["recent_form_responses"] = cursor.fetchone()[0]
             
             # Attendance summary

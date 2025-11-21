@@ -3962,7 +3962,7 @@ function filterRSVPEvents() {
             loading.style.display = 'inline-block';
             
             const formData = {
-                user_id: parseInt(document.getElementById('eventUserId').value),
+                user_id: document.getElementById('eventUserId').value,
                 event_name: document.getElementById('eventName').value,
                 wedding_date: document.getElementById('weddingDate').value,
                 location: document.getElementById('weddingLocation').value,
