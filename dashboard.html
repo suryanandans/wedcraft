@@ -3221,37 +3221,58 @@ function filterRSVPEvents() {
         async function downloadRSVPData(format) {
             console.log('downloadRSVPData called with format:', format);
             try {
-                const userId = getCurrentUserId();
-                console.log('Current user ID:', userId);
-                console.log('Fetching RSVP data from API...');
-                const response = await fetch(`/api/admin/enhanced-rsvp-responses?user_id=${userId}`);
+                // Extract data directly from the currently displayed table to ensure accuracy
+                const tableBody = document.getElementById('rsvpResponsesTableBody');
+                const currentRSVPResponses = [];
                 
-                console.log('API response status:', response.status);
-                
-                if (!response.ok) {
-                    console.error('API response not ok:', response.status, response.statusText);
-                    showAlert('rsvpAlert', 'Failed to fetch RSVP data for download', 'error');
-                    return;
+                if (tableBody) {
+                    const rows = tableBody.querySelectorAll('tr');
+                    console.log('Found', rows.length, 'rows in table');
+                    
+                    rows.forEach((row, index) => {
+                        const cells = row.querySelectorAll('td');
+                        if (cells.length >= 6) {
+                            // Extract data from table cells (skip S.No column)
+                            const familyName = cells[1].textContent.trim();
+                            const attendance = cells[2].textContent.trim().replace(/badge.*?"/g, ''); // Remove badge classes
+                            const membersCount = cells[3].textContent.trim();
+                            const foodPreference = cells[4].textContent.trim();
+                            const submittedDate = cells[5].textContent.trim();
+                            
+                            // Only add if it's not the "No RSVP responses found" message
+                            if (familyName && familyName !== 'No RSVP responses found' && familyName !== 'No matching RSVP responses found') {
+                                currentRSVPResponses.push({
+                                    family_name: familyName,
+                                    attendance: attendance,
+                                    members_count: membersCount === 'N/A' ? 'N/A' : membersCount,
+                                    food_preference: foodPreference,
+                                    created_at: submittedDate
+                                });
+                            }
+                        }
+                    });
                 }
                 
-                const data = await response.json();
-                console.log('API response data:', data);
-                const rsvpResponses = data.responses || [];
-                console.log('RSVP responses count:', rsvpResponses.length);
+                console.log('Extracted', currentRSVPResponses.length, 'responses from table');
+                console.log('Sample extracted data:', currentRSVPResponses.slice(0, 2));
                 
-                if (rsvpResponses.length === 0) {
-                    console.log('No RSVP responses found, downloading empty CSV with headers');
-                    // Still allow download of empty CSV with headers
+                // Get selected event info for filename
+                const selectedEventId = document.getElementById('eventFilter')?.value;
+                let eventInfo = '';
+                if (selectedEventId) {
+                    const eventSelect = document.getElementById('eventFilter');
+                    const selectedOption = eventSelect.options[eventSelect.selectedIndex];
+                    eventInfo = selectedOption ? `_${selectedOption.text.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
                 }
                 
                 if (format === 'csv') {
                     console.log('Starting CSV generation...');
                     try {
-                        downloadCSV(rsvpResponses);
+                        downloadCSVFromTableData(currentRSVPResponses, eventInfo);
                         console.log('CSV generation completed successfully');
-                        const message = rsvpResponses.length === 0
+                        const message = currentRSVPResponses.length === 0
                             ? 'CSV file downloaded with headers only (no RSVP data found)'
-                            : `CSV file downloaded successfully with ${rsvpResponses.length} RSVP responses`;
+                            : `CSV file downloaded successfully with ${currentRSVPResponses.length} RSVP responses`;
                         showAlert('rsvpAlert', message, 'success');
                     } catch (csvError) {
                         console.error('CSV generation failed:', csvError);
@@ -3265,8 +3286,78 @@ function filterRSVPEvents() {
             }
         }
 
-        // Download RSVP data as CSV
-        function downloadCSV(rsvpResponses) {
+        // Download RSVP data as CSV from table data
+        function downloadCSVFromTableData(tableData, eventInfo = '') {
+            console.log('downloadCSVFromTableData called with', tableData.length, 'responses');
+            try {
+                // Helper function to escape CSV values properly
+                function escapeCSV(value) {
+                    if (value === null || value === undefined) {
+                        return '';
+                    }
+                    const stringValue = String(value);
+                    // If the value contains comma, quote, or newline, wrap it in quotes and escape internal quotes
+                    if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+                        return '"' + stringValue.replace(/"/g, '""') + '"';
+                    }
+                    return stringValue;
+                }
+
+                const headers = ['S.No', 'Family Name', 'Attendance', 'Members Count', 'Food Preference', 'Submitted Date'];
+                let csvRows = [headers.join(',')];
+                
+                if (tableData.length === 0) {
+                    console.log('Creating empty CSV with headers only');
+                } else {
+                    console.log('Processing', tableData.length, 'table rows for CSV');
+                    const dataRows = tableData.map((row, index) => {
+                        return [
+                            index + 1, // Serial number
+                            escapeCSV(row.family_name || ''),
+                            escapeCSV(row.attendance || ''),
+                            row.members_count || 'N/A',
+                            escapeCSV(row.food_preference || ''),
+                            row.created_at || ''
+                        ].join(',');
+                    });
+                    csvRows = csvRows.concat(dataRows);
+                }
+                
+                const csvContent = csvRows.join('\n');
+
+                console.log('CSV content generated, length:', csvContent.length);
+                console.log('First 200 characters of CSV:', csvContent.substring(0, 200));
+                
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                console.log('Blob created, size:', blob.size);
+                
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                const filename = `rsvp_responses${eventInfo}_${new Date().toISOString().split('T')[0]}.csv`;
+                
+                console.log('Download filename:', filename);
+                console.log('Blob URL:', url);
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                
+                console.log('Triggering download...');
+                link.click();
+                
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                console.log('Download triggered and cleanup completed');
+            } catch (error) {
+                console.error('Error generating CSV from table data:', error);
+                showAlert('rsvpAlert', 'Error generating CSV file', 'error');
+                throw error;
+            }
+        }
+
+        // Download RSVP data as CSV (legacy function for API data)
+        function downloadCSV(rsvpResponses, eventInfo = '') {
             console.log('downloadCSV called with', rsvpResponses.length, 'responses');
             try {
                 // Helper function to escape CSV values properly
@@ -3282,32 +3373,30 @@ function filterRSVPEvents() {
                     return stringValue;
                 }
 
-                const headers = ['ID', 'Event', 'Family Name', 'Attendance', 'Members Count', 'Food Preference', 'Submitted Date'];
+                const headers = ['S.No', 'Family Name', 'Attendance', 'Members Count', 'Food Preference', 'Submitted Date'];
                 let csvRows = [headers.join(',')];
                 
                 if (rsvpResponses.length === 0) {
                     console.log('Creating empty CSV with headers only');
                 } else {
                     console.log('Processing', rsvpResponses.length, 'RSVP responses for CSV');
-                    const dataRows = rsvpResponses.map(rsvp => {
+                    const dataRows = rsvpResponses.map((rsvp, index) => {
                         try {
                             return [
-                                rsvp.id || '',
-                                escapeCSV(rsvp.event_name || `Event ID: ${rsvp.event_id}`),
+                                index + 1, // Serial number (same as table)
                                 escapeCSV(rsvp.family_name || ''),
                                 escapeCSV(rsvp.attendance || ''),
-                                rsvp.members_count || 0,
+                                rsvp.members_count || 'N/A',
                                 escapeCSV(formatFoodPreferences(rsvp)),
                                 rsvp.created_at ? new Date(rsvp.created_at).toLocaleDateString() : ''
                             ].join(',');
                         } catch (error) {
                             console.error('Error processing RSVP row:', error, rsvp);
                             return [
-                                rsvp.id || '',
-                                escapeCSV(`Event ID: ${rsvp.event_id}`),
+                                index + 1,
                                 escapeCSV(rsvp.family_name || ''),
                                 escapeCSV(rsvp.attendance || ''),
-                                rsvp.members_count || 0,
+                                rsvp.members_count || 'N/A',
                                 'Error processing food preferences',
                                 rsvp.created_at ? new Date(rsvp.created_at).toLocaleDateString() : ''
                             ].join(',');
@@ -3326,7 +3415,7 @@ function filterRSVPEvents() {
                 
                 const link = document.createElement('a');
                 const url = URL.createObjectURL(blob);
-                const filename = `rsvp_responses_${new Date().toISOString().split('T')[0]}.csv`;
+                const filename = `rsvp_responses${eventInfo}_${new Date().toISOString().split('T')[0]}.csv`;
                 
                 console.log('Download filename:', filename);
                 console.log('Blob URL:', url);
