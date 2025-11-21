@@ -1683,6 +1683,69 @@ async def get_real_time_stats(db: Session = Depends(get_db)):
             detail=f"Error fetching real-time stats: {str(e)}"
         )
 
+@app.get("/api/analytics/children-stats")
+async def get_children_statistics(event_id: Optional[int] = None, db: Session = Depends(get_db)):
+    """Get detailed children statistics and analytics"""
+    try:
+        from count import WeddingAnalytics
+        
+        analytics_engine = WeddingAnalytics()
+        
+        if event_id:
+            # Get children stats for specific event
+            analytics_data = analytics_engine.generate_analytics(event_id)
+            rsvp_data = analytics_data['rsvp_summary']
+            
+            return {
+                "success": True,
+                "event_id": event_id,
+                "children_data": {
+                    "total_children": rsvp_data['children'],
+                    "total_attendees": rsvp_data['yes'],
+                    "children_percentage": round((rsvp_data['children'] / max(1, rsvp_data['yes'])) * 100, 1),
+                    "family_breakdown": [
+                        {
+                            "family_name": family['family_name'],
+                            "attendance": family['attendance'],
+                            "children_count": family.get('children_in_family', 0),
+                            "total_members": family['members_count']
+                        }
+                        for family in rsvp_data['family_responses']
+                        if family.get('children_in_family', 0) > 0
+                    ]
+                },
+                "recommendations": [
+                    rec for rec in analytics_data.get('recommendations', [])
+                    if 'children' in rec.lower()
+                ],
+                "message": f"Children statistics for event {event_id}"
+            }
+        else:
+            # Get system-wide children stats
+            stats = analytics_engine.get_real_time_stats()
+            
+            return {
+                "success": True,
+                "system_wide": True,
+                "children_data": {
+                    "total_children": stats.get('total_children', 0),
+                    "total_members": stats.get('total_form_responses', 0),
+                    "children_percentage": round((stats.get('total_children', 0) / max(1, stats.get('total_form_responses', 0))) * 100, 1),
+                    "attendance_breakdown": stats.get('children_summary', {}),
+                    "food_preferences": {
+                        food_type: data.get('children', 0)
+                        for food_type, data in stats.get('food_summary', {}).items()
+                    }
+                },
+                "message": "System-wide children statistics"
+            }
+            
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching children statistics: {str(e)}"
+        )
+
 @app.get("/api/analytics/comprehensive-report")
 async def get_comprehensive_report(event_id: Optional[int] = None, db: Session = Depends(get_db)):
     """Get comprehensive analytics report with all processed data"""

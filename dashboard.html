@@ -2083,6 +2083,10 @@
                             </div>
                             <div class="stat-number" id="actualAttendees">0</div>
                             <div class="stat-label">Confirmed Attendees</div>
+                            <div class="stat-sublabel" id="childrenCount" style="font-size: 11px; color: #666; margin-top: 2px; opacity: 0.8;">
+                                <i class="fas fa-child" style="font-size: 10px; margin-right: 3px;"></i>
+                                <span id="childrenCountText">0 children</span>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon" style="background: linear-gradient(135deg, #4caf50, #45a049);">
@@ -3930,6 +3934,7 @@ function filterRSVPEvents() {
                 document.getElementById('actualMaybeCount').textContent = '0';
                 document.getElementById('actualVegCount').textContent = '0';
                 document.getElementById('actualNonVegCount').textContent = '0';
+                document.getElementById('childrenCountText').textContent = '0 children';
                 document.getElementById('totalFamiliesRegisteredPredicted').textContent = '0';
                 document.getElementById('predictedAttendees').textContent = '0';
                 document.getElementById('predictedVegCount').textContent = '0';
@@ -3993,6 +3998,7 @@ function filterRSVPEvents() {
                 document.getElementById('actualMaybeCount').textContent = '0';
                 document.getElementById('actualVegCount').textContent = '0';
                 document.getElementById('actualNonVegCount').textContent = '0';
+                document.getElementById('childrenCountText').textContent = '0 children';
                 document.getElementById('totalFamiliesRegisteredPredicted').textContent = '0';
                 document.getElementById('predictedAttendees').textContent = '0';
                 document.getElementById('predictedVegCount').textContent = '0';
@@ -4036,6 +4042,7 @@ function filterRSVPEvents() {
                 document.getElementById('actualMaybeCount').textContent = '0';
                 document.getElementById('actualVegCount').textContent = '0';
                 document.getElementById('actualNonVegCount').textContent = '0';
+                document.getElementById('childrenCountText').textContent = '0 children';
                 document.getElementById('totalFamiliesRegisteredPredicted').textContent = '0';
                 document.getElementById('predictedAttendees').textContent = '0';
                 document.getElementById('predictedVegCount').textContent = '0';
@@ -4097,14 +4104,35 @@ function filterRSVPEvents() {
                 }
             });
             
-            // Calculate predicted food preferences based on vegRatio
+            // Count children from individual family member data
+            let childrenCount = 0;
+            rsvpResponses.forEach(r => {
+                if (r.family_members && r.family_members.length > 0) {
+                    // Count individual family members who are children and attending
+                    r.family_members.forEach(member => {
+                        if (member.is_child && (r.attendance === 'Yes' || r.attendance === 'Maybe')) {
+                            childrenCount++;
+                        }
+                    });
+                }
+            });
+            
+            // Calculate predicted food requirements (children = 0 plates)
             const totalHistorical = vegCount + nonVegCount;
             let vegRatio = 0.6; // Default 60% vegetarian
             if (totalHistorical > 0) {
                 vegRatio = vegCount / totalHistorical;
             }
-            const predictedVegCount = Math.round(predictedAttendees * vegRatio);
-            const predictedNonVegCount = predictedAttendees - predictedVegCount;
+            
+            // For predictions, exclude children since they don't need plates
+            const predictedAdultAttendees = predictedAttendees - childrenCount;
+            const predictedAdultVeg = Math.round(predictedAdultAttendees * vegRatio);
+            const predictedAdultNonVeg = predictedAdultAttendees - predictedAdultVeg;
+            
+            // Food plates calculation (children = 0 plates)
+            // Non-veg eaters also need half veg plate
+            const predictedVegCount = predictedAdultVeg + Math.ceil(predictedAdultNonVeg * 0.5);
+            const predictedNonVegCount = predictedAdultNonVeg;
             
             // Calculate total attendees with maybe
             const totalAttendeesWithMaybe = confirmedAttendees + maybeAttendees;
@@ -4116,6 +4144,9 @@ function filterRSVPEvents() {
             document.getElementById('actualMaybeCount').textContent = maybeAttendees;
             document.getElementById('actualVegCount').textContent = vegCount;
             document.getElementById('actualNonVegCount').textContent = nonVegCount;
+            
+            // Update children count
+            document.getElementById('childrenCountText').textContent = `${childrenCount} children`;
             
             // Update detailed food preference counts
             document.getElementById('totalVegCount').textContent = vegCount;

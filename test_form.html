@@ -390,6 +390,33 @@
             </div>
         </div>
 
+        <!-- Children Statistics Section -->
+        <div class="event-info" id="childrenStats" style="display: none;">
+            <h2>
+                <i class="fas fa-child"></i>
+                <span>Children Statistics</span>
+            </h2>
+            <div class="info-item">
+                <i class="fas fa-users"></i>
+                <span id="totalChildrenCount">Loading...</span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-percentage"></i>
+                <span id="childrenPercentage">Loading...</span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-chart-bar"></i>
+                <span id="attendanceBreakdown">Loading...</span>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-utensils"></i>
+                <span id="foodPreferences">Loading...</span>
+            </div>
+            <button type="button" id="refreshStatsBtn" style="margin-top: 10px; padding: 8px 16px; background: #4A90E2; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                <i class="fas fa-sync-alt"></i> Refresh Stats
+            </button>
+        </div>
+
         <div class="form-section">
             <div class="alert" id="alert"></div>
 
@@ -445,6 +472,7 @@
         window.addEventListener('DOMContentLoaded', function() {
             loadEventData();
             setupFormHandlers();
+            loadChildrenStatistics();
         });
 
         // Load event data - will be hard coded by user as needed
@@ -495,6 +523,105 @@
 
             // Form submission
             document.getElementById('rsvpForm').addEventListener('submit', handleSubmit);
+            
+            // Refresh stats button
+            document.getElementById('refreshStatsBtn').addEventListener('click', function() {
+                loadChildrenStatistics();
+            });
+        }
+
+        // Load children statistics from API
+        async function loadChildrenStatistics() {
+            try {
+                const eventId = document.getElementById('eventId').value;
+                
+                // Show loading state
+                document.getElementById('totalChildrenCount').textContent = 'Loading...';
+                document.getElementById('childrenPercentage').textContent = 'Loading...';
+                document.getElementById('attendanceBreakdown').textContent = 'Loading...';
+                document.getElementById('foodPreferences').textContent = 'Loading...';
+                
+                // Fetch children statistics for the specific event
+                const response = await fetch(`/api/analytics/children-stats?event_id=${eventId}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const childrenData = data.children_data;
+                    
+                    // Update total children count
+                    document.getElementById('totalChildrenCount').textContent =
+                        `Total Children: ${childrenData.total_children} out of ${childrenData.total_attendees} attendees`;
+                    
+                    // Update children percentage
+                    document.getElementById('childrenPercentage').textContent =
+                        `Children Percentage: ${childrenData.children_percentage}%`;
+                    
+                    // Update attendance breakdown
+                    if (childrenData.family_breakdown && childrenData.family_breakdown.length > 0) {
+                        const familiesWithChildren = childrenData.family_breakdown.length;
+                        document.getElementById('attendanceBreakdown').textContent =
+                            `Families with Children: ${familiesWithChildren}`;
+                    } else {
+                        document.getElementById('attendanceBreakdown').textContent =
+                            'No families with children yet';
+                    }
+                    
+                    // Update food preferences (if available)
+                    document.getElementById('foodPreferences').textContent =
+                        'Food preferences will be shown after RSVP submissions';
+                    
+                    // Show the statistics section
+                    document.getElementById('childrenStats').style.display = 'block';
+                    
+                } else {
+                    // If event-specific stats fail, try system-wide stats
+                    const systemResponse = await fetch('/api/analytics/children-stats');
+                    
+                    if (systemResponse.ok) {
+                        const systemData = await systemResponse.json();
+                        const childrenData = systemData.children_data;
+                        
+                        // Update with system-wide data
+                        document.getElementById('totalChildrenCount').textContent =
+                            `System Total: ${childrenData.total_children} children out of ${childrenData.total_members} members`;
+                        
+                        document.getElementById('childrenPercentage').textContent =
+                            `System Average: ${childrenData.children_percentage}%`;
+                        
+                        // Update attendance breakdown
+                        const attendanceText = Object.entries(childrenData.attendance_breakdown || {})
+                            .map(([status, count]) => `${status}: ${count}`)
+                            .join(', ');
+                        document.getElementById('attendanceBreakdown').textContent =
+                            attendanceText || 'No attendance data available';
+                        
+                        // Update food preferences
+                        const foodText = Object.entries(childrenData.food_preferences || {})
+                            .map(([food, count]) => `${food}: ${count}`)
+                            .join(', ');
+                        document.getElementById('foodPreferences').textContent =
+                            foodText || 'No food preference data available';
+                        
+                        // Show the statistics section
+                        document.getElementById('childrenStats').style.display = 'block';
+                        
+                    } else {
+                        throw new Error('Failed to load children statistics');
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error loading children statistics:', error);
+                
+                // Show error state
+                document.getElementById('totalChildrenCount').textContent = 'Error loading statistics';
+                document.getElementById('childrenPercentage').textContent = 'Please try again later';
+                document.getElementById('attendanceBreakdown').textContent = 'API connection failed';
+                document.getElementById('foodPreferences').textContent = 'Check console for details';
+                
+                // Still show the section so user can try refresh
+                document.getElementById('childrenStats').style.display = 'block';
+            }
         }
 
         // Generate guest detail fields
@@ -640,6 +767,11 @@
                     document.getElementById('membersGroup').style.display = 'none';
                     document.getElementById('guestsDetailsGroup').style.display = 'none';
                     document.getElementById('guestsContainer').innerHTML = '';
+                    
+                    // Refresh children statistics after successful submission
+                    setTimeout(() => {
+                        loadChildrenStatistics();
+                    }, 1000); // Wait 1 second for database to update
                 } else {
                     const errorData = await response.json();
                     showAlert(errorData.detail || 'Failed to submit RSVP. Please try again.', 'error');

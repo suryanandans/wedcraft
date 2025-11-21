@@ -62,58 +62,104 @@ class WeddingAnalytics:
         print(f"🔹 Model trained successfully! MAE: {mae:.2f}")
     
     def fetch_rsvp_data(self, event_id: Optional[int] = None) -> Dict[str, Any]:
-        """Fetch RSVP data from database and process it"""
+        """Fetch RSVP data from database and process it using real family member data"""
         conn = pymysql.connect(**self.db_config)
         cursor = conn.cursor()
         
         try:
+            # Fetch RSVP responses with detailed family member information
             if event_id:
-                query = "SELECT * FROM rsvp_responses WHERE event_id = %s"
-                cursor.execute(query, (event_id,))
+                rsvp_query = """
+                    SELECT r.id, r.event_id, r.family_name, r.attendance,
+                           r.members_count, r.food_preference, r.created_at
+                    FROM rsvp_responses r
+                    WHERE r.event_id = %s
+                """
+                cursor.execute(rsvp_query, (event_id,))
             else:
-                query = "SELECT * FROM rsvp_responses"
-                cursor.execute(query)
+                rsvp_query = """
+                    SELECT r.id, r.event_id, r.family_name, r.attendance,
+                           r.members_count, r.food_preference, r.created_at
+                    FROM rsvp_responses r
+                """
+                cursor.execute(rsvp_query)
             
             rsvp_data = cursor.fetchall()
             
-            # Process RSVP data
+            # Initialize counters
             yes_count = 0
             no_count = 0
             maybe_count = 0
             veg_count = 0
             nonveg_count = 0
             total_members = 0
-            children_count = 0  # Estimate based on family size
+            children_count = 0  # Real count from family_members table
             
             family_responses = []
             
             for row in rsvp_data:
-                # row structure: (id, event_id, family_name, attendance, members_count, food_preference, created_at)
+                rsvp_id = row[0]
                 attendance = row[3]
                 members_count = row[4] or 0
                 food_preference = row[5]
                 
+                # Get detailed family member information
+                member_query = """
+                    SELECT member_name, food_preference, is_child
+                    FROM family_members
+                    WHERE rsvp_response_id = %s
+                """
+                cursor.execute(member_query, (rsvp_id,))
+                family_members = cursor.fetchall()
+                
+                # Process family member details
+                family_veg_count = 0
+                family_nonveg_count = 0
+                family_children_count = 0
+                actual_member_count = len(family_members) if family_members else members_count
+                
+                for member in family_members:
+                    member_food_pref = member[1]
+                    is_child = member[2]
+                    
+                    if member_food_pref == "Vegetarian":
+                        family_veg_count += 1
+                    elif member_food_pref == "Non-Vegetarian":
+                        family_nonveg_count += 1
+                    
+                    if is_child:
+                        family_children_count += 1
+                
                 family_responses.append({
                     "family_name": row[2],
                     "attendance": attendance,
-                    "members_count": members_count,
-                    "food_preference": food_preference
+                    "members_count": actual_member_count,
+                    "food_preference": food_preference,
+                    "detailed_members": len(family_members),
+                    "children_in_family": family_children_count
                 })
                 
+                # Count based on attendance status
                 if attendance == "Yes":
-                    yes_count += members_count
-                    total_members += members_count
-                    # Estimate children as 20% of family members
-                    children_count += max(0, int(members_count * 0.2))
+                    yes_count += actual_member_count
+                    total_members += actual_member_count
+                    children_count += family_children_count
                     
-                    if food_preference == "Vegetarian":
-                        veg_count += members_count
-                    elif food_preference == "Non-Vegetarian":
-                        nonveg_count += members_count
+                    # Use detailed food preferences if available, otherwise fall back to family preference
+                    if family_members:
+                        veg_count += family_veg_count
+                        nonveg_count += family_nonveg_count
+                    else:
+                        # Fallback to family-level food preference
+                        if food_preference == "Vegetarian":
+                            veg_count += actual_member_count
+                        elif food_preference == "Non-Vegetarian":
+                            nonveg_count += actual_member_count
+                            
                 elif attendance == "No":
-                    no_count += members_count
+                    no_count += actual_member_count
                 elif attendance == "Maybe":
-                    maybe_count += members_count
+                    maybe_count += actual_member_count
             
             return {
                 "yes": yes_count,
@@ -131,11 +177,25 @@ class WeddingAnalytics:
             conn.close()
     
     def fetch_form_responses(self, template_id: Optional[int] = None) -> Dict[str, Any]:
-        """Fetch form response data from database"""
+        """Fetch form response data from database (with fallback for missing tables)"""
         conn = pymysql.connect(**self.db_config)
         cursor = conn.cursor()
         
         try:
+            # Check if form_responses table exists
+            cursor.execute("""
+                SELECT COUNT(*) FROM information_schema.tables
+                WHERE table_schema = 'wedcrafts' AND table_name = 'form_responses'
+            """)
+            table_exists = cursor.fetchone()[0] > 0
+            
+            if not table_exists:
+                logger.warning("form_responses table not found, returning empty data")
+                return {
+                    "total_responses": 0,
+                    "responses": []
+                }
+            
             if template_id:
                 query = "SELECT * FROM form_responses WHERE form_template_id = %s"
                 cursor.execute(query, (template_id,))
@@ -167,6 +227,12 @@ class WeddingAnalytics:
                 "responses": responses
             }
             
+        except Exception as e:
+            logger.warning(f"Error fetching form responses: {str(e)}")
+            return {
+                "total_responses": 0,
+                "responses": []
+            }
         finally:
             conn.close()
     
@@ -200,19 +266,43 @@ class WeddingAnalytics:
             # Fallback calculation if no ML model or no data
             expected_attendance = rsvp_data["yes"] + int(rsvp_data["maybe"] * 0.4)
         
-        # Food calculations with realistic estimates
+        # Food calculations with realistic estimates (children = 0 plates)
         confirmed_attendees = rsvp_data["yes"]
         maybe_attendees = int(rsvp_data["maybe"] * 0.4)  # 40% of maybe responses typically attend
         total_expected = confirmed_attendees + maybe_attendees
+        children_count = rsvp_data["children"]
+        
+        # Calculate adult attendees (exclude children for food planning)
+        confirmed_adults = max(0, confirmed_attendees - children_count)
+        expected_adults = max(0, total_expected - children_count)
         
         # If we have specific food preferences, use them with some buffer
         if rsvp_data["veg"] > 0 or rsvp_data["nonveg"] > 0:
-            veg_required = rsvp_data["veg"] + int(maybe_attendees * 0.6)  # Assume 60% of maybe are veg
-            nonveg_required = rsvp_data["nonveg"] + int(maybe_attendees * 0.4)  # Assume 40% of maybe are non-veg
+            # Calculate adult food ratios (children don't count for food)
+            total_adult_food = rsvp_data["veg"] + rsvp_data["nonveg"]
+            if total_adult_food > 0:
+                adult_veg_ratio = rsvp_data["veg"] / total_adult_food
+                adult_nonveg_ratio = rsvp_data["nonveg"] / total_adult_food
+            else:
+                adult_veg_ratio = 0.6  # Default 60% vegetarian
+                adult_nonveg_ratio = 0.4  # Default 40% non-vegetarian
+            
+            # Calculate predicted adult food requirements
+            predicted_adult_veg = int(expected_adults * adult_veg_ratio)
+            predicted_adult_nonveg = int(expected_adults * adult_nonveg_ratio)
+            
+            # Food plates calculation (children = 0 plates)
+            # Non-veg eaters also need half veg plate
+            veg_required = predicted_adult_veg + int(predicted_adult_nonveg * 0.5)
+            nonveg_required = predicted_adult_nonveg
         else:
-            # If no specific preferences, estimate based on typical ratios
-            veg_required = int(total_expected * 0.6)  # 60% vegetarian estimate
-            nonveg_required = int(total_expected * 0.4)  # 40% non-vegetarian estimate
+            # If no specific preferences, estimate based on typical ratios (adults only)
+            predicted_adult_veg = int(expected_adults * 0.6)  # 60% vegetarian estimate
+            predicted_adult_nonveg = int(expected_adults * 0.4)  # 40% non-vegetarian estimate
+            
+            # Food plates calculation
+            veg_required = predicted_adult_veg + int(predicted_adult_nonveg * 0.5)
+            nonveg_required = predicted_adult_nonveg
         
         # Additional analytics
         response_rate = (rsvp_data["total_families"] / max(1, rsvp_data["total_families"])) * 100
@@ -388,7 +478,7 @@ class WeddingAnalytics:
         ]
     
     def get_real_time_stats(self) -> Dict[str, Any]:
-        """Get real-time statistics for dashboard"""
+        """Get real-time statistics for dashboard with accurate children counting"""
         logger.info("Generating real-time statistics...")
         
         conn = pymysql.connect(**self.db_config)
@@ -414,9 +504,13 @@ class WeddingAnalytics:
             cursor.execute("SELECT COUNT(*) FROM rsvp_responses")
             stats["total_rsvp_responses"] = cursor.fetchone()[0]
             
-            # Form responses count (using family_members as alternative)
+            # Family members count
             cursor.execute("SELECT COUNT(*) FROM family_members")
             stats["total_form_responses"] = cursor.fetchone()[0]
+            
+            # Children count (real data from family_members table)
+            cursor.execute("SELECT COUNT(*) FROM family_members WHERE is_child = 1")
+            stats["total_children"] = cursor.fetchone()[0]
             
             # Recent activity (last 7 days)
             week_ago = (datetime.now() - timedelta(days=7)).isoformat()
@@ -427,36 +521,66 @@ class WeddingAnalytics:
             cursor.execute("SELECT COUNT(*) FROM family_members WHERE created_at > %s", (week_ago,))
             stats["recent_form_responses"] = cursor.fetchone()[0]
             
-            # Attendance summary
+            # Enhanced attendance summary with real member counts
             cursor.execute("""
-                SELECT attendance, COUNT(*) as count, SUM(members_count) as total_members
-                FROM rsvp_responses
-                GROUP BY attendance
+                SELECT r.attendance,
+                       COUNT(r.id) as families_count,
+                       COUNT(fm.id) as actual_members,
+                       COUNT(CASE WHEN fm.is_child = 1 THEN 1 END) as children_count
+                FROM rsvp_responses r
+                LEFT JOIN family_members fm ON r.id = fm.rsvp_response_id
+                GROUP BY r.attendance
             """)
             attendance_data = cursor.fetchall()
             
             stats["attendance_summary"] = {
-                row[0]: {"families": row[1], "members": row[2] or 0}
+                row[0]: {
+                    "families": row[1],
+                    "members": row[2] or 0,
+                    "children": row[3] or 0
+                }
                 for row in attendance_data
             }
             
-            # Food preference summary
+            # Enhanced food preference summary with real data
             cursor.execute("""
-                SELECT food_preference, COUNT(*) as count, SUM(members_count) as total_members
-                FROM rsvp_responses
-                WHERE attendance = 'Yes' AND food_preference IS NOT NULL
-                GROUP BY food_preference
+                SELECT fm.food_preference,
+                       COUNT(fm.id) as member_count,
+                       COUNT(CASE WHEN fm.is_child = 1 THEN 1 END) as children_count
+                FROM family_members fm
+                JOIN rsvp_responses r ON fm.rsvp_response_id = r.id
+                WHERE r.attendance = 'Yes' AND fm.food_preference IS NOT NULL
+                GROUP BY fm.food_preference
             """)
             food_data = cursor.fetchall()
             
             stats["food_summary"] = {
-                row[0]: {"families": row[1], "members": row[2] or 0}
+                row[0]: {
+                    "members": row[1] or 0,
+                    "children": row[2] or 0
+                }
                 for row in food_data
+            }
+            
+            # Additional children-specific statistics
+            cursor.execute("""
+                SELECT r.attendance,
+                       COUNT(CASE WHEN fm.is_child = 1 THEN 1 END) as children_count
+                FROM rsvp_responses r
+                LEFT JOIN family_members fm ON r.id = fm.rsvp_response_id
+                WHERE r.attendance IN ('Yes', 'Maybe')
+                GROUP BY r.attendance
+            """)
+            children_attendance = cursor.fetchall()
+            
+            stats["children_summary"] = {
+                row[0]: row[1] or 0
+                for row in children_attendance
             }
             
             stats["generated_at"] = datetime.now().isoformat()
             
-            logger.info("Real-time statistics generated successfully")
+            logger.info("Real-time statistics generated successfully with accurate children counting")
             return stats
             
         except Exception as e:
