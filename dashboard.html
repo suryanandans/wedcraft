@@ -2037,11 +2037,11 @@
                                 <option value="">All Users</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="filter-buttons">
-                        <button onclick="clearInvitationFilters()" class="enhanced-filter-btn filter-btn-secondary">
-                            <i class="fas fa-times"></i> Clear Filters
-                        </button>
+                        <div class="filter-group">
+                            <button onclick="clearInvitationFilters()" class="enhanced-filter-btn filter-btn-secondary">
+                                <i class="fas fa-times"></i> Clear Filters
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -2107,11 +2107,11 @@
                                 <option value="">All Users</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="filter-buttons">
-                        <button onclick="clearRSVPFilters()" class="enhanced-filter-btn filter-btn-secondary">
-                            <i class="fas fa-times"></i> Clear Filters
-                        </button>
+                        <div class="filter-group">
+                            <button onclick="clearRSVPFilters()" class="enhanced-filter-btn filter-btn-secondary">
+                                <i class="fas fa-times"></i> Clear Filters
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -2951,24 +2951,6 @@
             }
         }
         
-        // Fallback to old stats endpoint
-        async function loadOldStatsEndpoint() {
-            try {
-                const statsResponse = await fetch('/api/admin/stats');
-                if (statsResponse.ok) {
-                    const statsData = await statsResponse.json();
-                    if (statsData.success) {
-                        document.getElementById('totalUsers').textContent = statsData.stats.total_users;
-                        document.getElementById('totalEvents').textContent = statsData.stats.total_events;
-                        document.getElementById('totalRSVPs').textContent = statsData.stats.active_events;
-                        document.getElementById('activeEvents').textContent = statsData.stats.active_events;
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading old stats:', error);
-                await loadIndividualStats();
-            }
-        }
         
         // Fallback function to load individual stats
         async function loadIndividualStats() {
@@ -3774,45 +3756,6 @@ function filterRSVPEvents() {
             document.getElementById('eventSelectionView').style.display = 'block';
             document.getElementById('rsvpResponsesView').style.display = 'none';
         }
-        async function loadRSVPAnalytics(userId) {
-            try {
-                // Get analytics for user's events
-                const analyticsResponse = await fetch(`/api/analytics/rsvp-summary?event_id=${userId}`);
-                if (analyticsResponse.ok) {
-                    const analyticsData = await analyticsResponse.json();
-                    if (analyticsData.success && analyticsData.rsvp_data) {
-                        const rsvpData = analyticsData.rsvp_data;
-                        
-                        // Update RSVP summary statistics with processed data from count.py
-                        let totalFamiliesFromAnalytics = rsvpData.total_families || 0;
-                        
-                        // TEMPORARY FIX: Correct the count if it's wrong
-                        if (totalFamiliesFromAnalytics !== 28) {
-                            console.log(`Analytics: Expected 28 families, got ${totalFamiliesFromAnalytics}. Using correct count.`);
-                            totalFamiliesFromAnalytics = 28;
-                        }
-                        
-                        document.getElementById('totalFamiliesRegistered').textContent = totalFamiliesFromAnalytics;
-                        
-                        // Get predictions from analytics endpoint
-                        const predictionsResponse = await fetch(`/api/analytics/predictions?event_id=${userId}`);
-                        if (predictionsResponse.ok) {
-                            const predictionsData = await predictionsResponse.json();
-                            if (predictionsData.success && predictionsData.predictions) {
-                                const predictions = predictionsData.predictions;
-                                document.getElementById('predictedAttendees').textContent = predictions.expected_attendance || 0;
-                                document.getElementById('predictedVegCount').textContent = predictions.veg_required || 0;
-                                document.getElementById('predictedNonVegCount').textContent = predictions.nonveg_required || 0;
-                            }
-                        }
-                        
-                        console.log('RSVP analytics loaded from count.py:', rsvpData);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading RSVP analytics:', error);
-            }
-        }
 
         // Load invitation data and setup form
         function loadInvitationData() {
@@ -4470,99 +4413,8 @@ function filterRSVPEvents() {
             }
         }
 
-        // Download RSVP data as CSV (legacy function for API data)
-        function downloadCSV(rsvpResponses, eventInfo = '') {
-            console.log('downloadCSV called with', rsvpResponses.length, 'responses');
-            try {
-                // Helper function to escape CSV values properly
-                function escapeCSV(value) {
-                    if (value === null || value === undefined) {
-                        return '';
-                    }
-                    const stringValue = String(value);
-                    // If the value contains comma, quote, or newline, wrap it in quotes and escape internal quotes
-                    if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-                        return '"' + stringValue.replace(/"/g, '""') + '"';
-                    }
-                    return stringValue;
-                }
-
-                const headers = ['S.No', 'Family Name', 'Attendance', 'Members Count', 'Food Preference', 'Submitted Date'];
-                let csvRows = [headers.join(',')];
-                
-                if (rsvpResponses.length === 0) {
-                    console.log('Creating empty CSV with headers only');
-                } else {
-                    console.log('Processing', rsvpResponses.length, 'RSVP responses for CSV');
-                    const dataRows = rsvpResponses.map((rsvp, index) => {
-                        try {
-                            return [
-                                index + 1, // Serial number (same as table)
-                                escapeCSV(rsvp.family_name || ''),
-                                escapeCSV(rsvp.attendance || ''),
-                                rsvp.members_count || 'N/A',
-                                escapeCSV(formatFoodPreferences(rsvp)),
-                                rsvp.created_at ? new Date(rsvp.created_at).toLocaleDateString() : ''
-                            ].join(',');
-                        } catch (error) {
-                            console.error('Error processing RSVP row:', error, rsvp);
-                            return [
-                                index + 1,
-                                escapeCSV(rsvp.family_name || ''),
-                                escapeCSV(rsvp.attendance || ''),
-                                rsvp.members_count || 'N/A',
-                                'Error processing food preferences',
-                                rsvp.created_at ? new Date(rsvp.created_at).toLocaleDateString() : ''
-                            ].join(',');
-                        }
-                    });
-                    csvRows = csvRows.concat(dataRows);
-                }
-                
-                const csvContent = csvRows.join('\n');
-
-                console.log('CSV content generated, length:', csvContent.length);
-                console.log('First 200 characters of CSV:', csvContent.substring(0, 200));
-                
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                console.log('Blob created, size:', blob.size);
-                
-                const link = document.createElement('a');
-                const url = URL.createObjectURL(blob);
-                const filename = `rsvp_responses${eventInfo}_${new Date().toISOString().split('T')[0]}.csv`;
-                
-                console.log('Download filename:', filename);
-                console.log('Blob URL:', url);
-                
-                link.setAttribute('href', url);
-                link.setAttribute('download', filename);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                
-                console.log('Triggering download...');
-                link.click();
-                
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                console.log('Download triggered and cleanup completed');
-            } catch (error) {
-                console.error('Error generating CSV:', error);
-                showAlert('rsvpAlert', 'Error generating CSV file', 'error');
-                throw error;
-            }
-        }
 
 
-        // Helper function to calculate predicted attendees
-        function calculatePredictedAttendees(rsvpResponses) {
-            const yesResponses = rsvpResponses.filter(r => r.attendance.toLowerCase() === 'yes');
-            const maybeResponses = rsvpResponses.filter(r => r.attendance.toLowerCase() === 'maybe');
-            
-            const confirmedAttendees = yesResponses.reduce((sum, r) => sum + (r.members_count || 0), 0);
-            const maybeAttendees = maybeResponses.reduce((sum, r) => sum + (r.members_count || 0), 0);
-            
-            return confirmedAttendees + Math.round(maybeAttendees * 0.7);
-        }
 
         // Toggle RSVP view between summary and detailed
         let currentRSVPView = 'summary';
@@ -5028,23 +4880,6 @@ function filterRSVPEvents() {
             document.getElementById('uploadInvitationAlert').style.display = 'none';
         }
 
-        // View RSVP
-        function viewRSVP(rsvpId) {
-            // TODO: Implement view RSVP functionality
-            console.log('View RSVP:', rsvpId);
-        }
-
-        // Show profile
-        function showProfile() {
-            // TODO: Implement profile functionality
-            console.log('Show profile');
-        }
-
-        // Show settings
-        function showSettings() {
-            // TODO: Implement settings functionality
-            console.log('Show settings');
-        }
 
         // Track edit mode
         let isEditingEvent = false;
