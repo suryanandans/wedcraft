@@ -3067,10 +3067,10 @@
                     <td>${user.email}</td>
                     <td>${new Date(user.created_at).toLocaleDateString()}</td>
                     <td>
-                        <button class="btn btn-secondary btn-sm" onclick="editUser(${user.id})">
+                        <button class="btn btn-secondary btn-sm" onclick="editUser('${user.id}')">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">
+                        <button class="btn btn-danger btn-sm" onclick="deleteUser('${user.id}')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </td>
@@ -3110,7 +3110,7 @@
                     <td><span class="badge badge-admin">${user.role}</span></td>
                     <td>${new Date(user.created_at).toLocaleDateString()}</td>
                     <td>
-                        <button class="btn btn-secondary btn-sm" onclick="editUser(${user.id})">
+                        <button class="btn btn-secondary btn-sm" onclick="editUser('${user.id}')">
                             <i class="fas fa-edit"></i>
                         </button>
                     </td>
