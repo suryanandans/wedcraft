@@ -627,6 +627,19 @@
                 padding: 25px;
             }
             
+            /* Ensure sidebar is minimized by default on tablet */
+            .sidebar {
+                width: 70px;
+            }
+            
+            .sidebar.active {
+                width: 300px;
+            }
+            
+            .main-content.sidebar-open {
+                margin-left: 300px;
+            }
+            
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 15px;
@@ -653,6 +666,346 @@
             
             table {
                 min-width: 700px;
+            }
+            
+            /* Tablet-specific container layouts */
+            
+            /* Event cards in invitation section */
+            #invitationEventCardsContainer {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 20px !important;
+            }
+            
+            /* Event cards in RSVP section */
+            #eventCardsContainer {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 20px !important;
+            }
+            
+            /* Filter containers - keep horizontal layout on tablet */
+            .filters-container > div {
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
+                align-items: center !important;
+                gap: 15px !important;
+            }
+            
+            .filters-container > div > div {
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 10px !important;
+                min-width: auto !important;
+            }
+            
+            /* Invitation section filter controls */
+            div[style*="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;"] {
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
+                align-items: center !important;
+                gap: 15px !important;
+            }
+            
+            div[style*="flex: 1; min-width: 250px;"] {
+                flex: 1 !important;
+                min-width: 200px !important;
+            }
+            
+            div[style*="display: flex; gap: 10px; align-items: center;"] {
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 10px !important;
+            }
+            
+            /* RSVP section filter controls */
+            div[style*="margin-bottom: 20px; display: flex; gap: 15px"] {
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
+                align-items: center !important;
+                gap: 15px !important;
+            }
+            
+            div[style*="flex: 1;"] {
+                flex: 1 !important;
+                min-width: 200px !important;
+            }
+            
+            div[style*="flex: 0 0 200px;"] {
+                flex: 0 0 180px !important;
+            }
+            
+            div[style*="flex: 0 0 auto;"] {
+                flex: 0 0 auto !important;
+            }
+            
+            /* Section headers - keep horizontal on tablet */
+            .section-header {
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+            }
+            
+            #rsvpResponsesView .section-header {
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+            }
+            
+            #rsvpResponsesView .section-header > div {
+                flex-direction: row !important;
+                gap: 10px !important;
+                width: auto !important;
+            }
+            
+            #rsvpResponsesView .section-header button {
+                width: auto !important;
+                justify-content: center !important;
+            }
+            
+            /* When sidebar is open on tablet - single column layout */
+            .main-content.sidebar-open #invitationEventCardsContainer {
+                grid-template-columns: 1fr !important;
+                gap: 15px !important;
+            }
+            
+            .main-content.sidebar-open #eventCardsContainer {
+                grid-template-columns: 1fr !important;
+                gap: 15px !important;
+            }
+            
+            .main-content.sidebar-open .stats-grid {
+                grid-template-columns: 1fr !important;
+                gap: 15px !important;
+            }
+            
+            /* When sidebar is open - adjust filter layouts for narrower space */
+            .main-content.sidebar-open .filters-container {
+                max-width: none !important;
+                width: 100% !important;
+                padding: 20px !important;
+            }
+            
+            .main-content.sidebar-open .filters-container > div {
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 15px !important;
+                width: 100% !important;
+                max-width: 500px !important;
+                margin: 0 auto !important;
+            }
+            
+            .main-content.sidebar-open .filters-container > div > div {
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 12px !important;
+                min-width: auto !important;
+                justify-content: center !important;
+                width: 100% !important;
+            }
+            
+            .main-content.sidebar-open .filters-container select,
+            .main-content.sidebar-open .filters-container input {
+                min-width: 150px !important;
+                width: auto !important;
+                flex: 1 !important;
+                max-width: 200px !important;
+            }
+            
+            .main-content.sidebar-open .filters-container button {
+                width: auto !important;
+                white-space: nowrap !important;
+                align-self: center !important;
+                padding: 10px 20px !important;
+                min-width: 120px !important;
+            }
+            
+            .main-content.sidebar-open .filters-container label {
+                white-space: nowrap !important;
+                margin-right: 12px !important;
+                min-width: 80px !important;
+                text-align: right !important;
+            }
+            
+            /* Invitation section filters when sidebar is open */
+            .main-content.sidebar-open div[style*="background: white; padding: 20px; border-radius: 12px"] {
+                max-width: none !important;
+                width: 100% !important;
+                padding: 20px !important;
+            }
+            
+            .main-content.sidebar-open div[style*="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;"] {
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 15px !important;
+                width: 100% !important;
+                max-width: 500px !important;
+                margin: 0 auto !important;
+            }
+            
+            .main-content.sidebar-open div[style*="flex: 1; min-width: 250px;"] {
+                flex: none !important;
+                min-width: auto !important;
+                width: 100% !important;
+                max-width: 400px !important;
+            }
+            
+            .main-content.sidebar-open div[style*="display: flex; gap: 10px; align-items: center;"] {
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 12px !important;
+                justify-content: center !important;
+                width: 100% !important;
+            }
+            
+            .main-content.sidebar-open div[style*="display: flex; gap: 10px; align-items: center;"] label {
+                white-space: nowrap !important;
+                min-width: 60px !important;
+                text-align: right !important;
+            }
+            
+            .main-content.sidebar-open div[style*="display: flex; gap: 10px; align-items: center;"] input,
+            .main-content.sidebar-open div[style*="display: flex; gap: 10px; align-items: center;"] select {
+                flex: 1 !important;
+                min-width: 150px !important;
+                max-width: 200px !important;
+            }
+            
+            /* RSVP section filters when sidebar is open */
+            .main-content.sidebar-open div[style*="margin-bottom: 20px; display: flex; gap: 15px"] {
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 15px !important;
+                width: 100% !important;
+                max-width: 500px !important;
+                margin: 0 auto 15px auto !important;
+                padding: 20px !important;
+            }
+            
+            .main-content.sidebar-open div[style*="flex: 1;"] {
+                flex: none !important;
+                min-width: auto !important;
+                width: 100% !important;
+                max-width: 400px !important;
+            }
+            
+            .main-content.sidebar-open div[style*="flex: 0 0 200px;"] {
+                flex: none !important;
+                width: 100% !important;
+                max-width: 250px !important;
+            }
+            
+            .main-content.sidebar-open div[style*="flex: 0 0 auto;"] {
+                flex: none !important;
+                align-self: center !important;
+            }
+            
+            .main-content.sidebar-open div[style*="flex: 0 0 auto;"] button {
+                align-self: center !important;
+                min-width: 120px !important;
+                padding: 10px 20px !important;
+            }
+            
+            /* User section specific fixes when sidebar is open */
+            .main-content.sidebar-open #userStatsGrid {
+                grid-template-columns: 1fr !important;
+                gap: 15px !important;
+            }
+            
+            .main-content.sidebar-open #userStatsGrid .stat-card {
+                max-width: 400px !important;
+                margin: 0 auto !important;
+            }
+            
+            /* User dashboard and content adjustments */
+            .main-content.sidebar-open .content-section {
+                padding: 20px !important;
+            }
+            
+            .main-content.sidebar-open .section-header {
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 15px !important;
+                text-align: center !important;
+            }
+            
+            .main-content.sidebar-open .section-header .btn {
+                width: auto !important;
+                min-width: 150px !important;
+            }
+            
+            /* User-specific table containers */
+            .main-content.sidebar-open .table-container {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            
+            .main-content.sidebar-open .table-container table {
+                min-width: 500px !important;
+                font-size: 14px !important;
+            }
+            
+            /* User form grids */
+            .main-content.sidebar-open .form-grid {
+                grid-template-columns: 1fr !important;
+                gap: 15px !important;
+                max-width: 500px !important;
+                margin: 0 auto !important;
+            }
+            
+            /* User modal adjustments */
+            .main-content.sidebar-open .modal-content {
+                max-width: 90% !important;
+                width: 90% !important;
+            }
+            
+            /* User section filter containers - specific targeting */
+            .main-content.sidebar-open #userSection .filters-container,
+            .main-content.sidebar-open #userSection div[style*="display: flex"],
+            .main-content.sidebar-open #userSection div[style*="gap"] {
+                width: 100% !important;
+                max-width: 500px !important;
+                margin: 0 auto !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 15px !important;
+            }
+            
+            .main-content.sidebar-open #userSection input,
+            .main-content.sidebar-open #userSection select,
+            .main-content.sidebar-open #userSection button {
+                min-width: 150px !important;
+                max-width: 200px !important;
+                width: auto !important;
+            }
+        }
+
+        /* Tablet View (769px - 1024px) */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .sidebar {
+                width: 70px;
+                transform: translateX(0) !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                transition: width 0.3s ease;
+            }
+            
+            .sidebar.active {
+                width: 300px;
+            }
+            
+            /* Ensure sidebar is always visible on tablet, just minimized by default */
+            .sidebar:not(.active) {
+                width: 70px !important;
+                transform: translateX(0) !important;
+            }
+            
+            /* Main content adjustments for tablet */
+            .main-content {
+                margin-left: 70px;
+                transition: margin-left 0.3s ease;
+            }
+            
+            .main-content.sidebar-open {
+                margin-left: 300px;
             }
         }
 
@@ -2054,15 +2407,25 @@
                 const hamburger = document.getElementById('hamburger');
                 const mainContent = document.getElementById('mainContent');
                 
-                // If window is resized to desktop size, ensure sidebar is properly positioned
-                if (window.innerWidth > 768) {
-                    // On desktop, remove mobile-specific classes but keep sidebar functionality
-                    if (sidebar.classList.contains('active')) {
+                if (window.innerWidth > 1024) {
+                    // Desktop view (>1024px): Full sidebar always visible
+                    sidebar.classList.remove('active');
+                    hamburger.classList.remove('active');
+                    mainContent.classList.remove('sidebar-open');
+                } else if (window.innerWidth > 768) {
+                    // Tablet view (769px-1024px): Minimized sidebar by default, can be toggled
+                    if (!sidebar.classList.contains('active')) {
+                        // If sidebar is not active, ensure it's minimized but visible
+                        mainContent.classList.remove('sidebar-open');
+                    } else {
+                        // If sidebar is active (expanded), keep it expanded
                         mainContent.classList.add('sidebar-open');
                     }
                 } else {
-                    // On mobile, ensure sidebar is closed by default and main content is not offset
-                    mainContent.classList.remove('sidebar-open');
+                    // Mobile view (≤768px): Sidebar hidden by default
+                    if (!sidebar.classList.contains('active')) {
+                        mainContent.classList.remove('sidebar-open');
+                    }
                 }
             });
             
@@ -2251,8 +2614,8 @@
             // Add active class to clicked nav item
             event.target.classList.add('active');
             
-            // Auto-close sidebar on mobile after selecting a section
-            if (window.innerWidth <= 768) {
+            // Auto-close sidebar on mobile and tablet after selecting a section
+            if (window.innerWidth <= 1024) {
                 const sidebar = document.getElementById('sidebar');
                 const hamburger = document.getElementById('hamburger');
                 const mainContent = document.getElementById('mainContent');
