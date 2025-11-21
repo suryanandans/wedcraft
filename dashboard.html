@@ -116,51 +116,140 @@
 
         .dropdown {
             position: absolute;
-            top: 50px;
+            top: 55px;
             right: 0;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            min-width: 200px;
+            background: #fafafa;
+            box-shadow:
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 8px 16px rgba(0, 0, 0, 0.08);
+            min-width: 280px;
             opacity: 0;
             visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
+            transform: translateY(-15px) scale(0.95);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 1001;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .dropdown.active {
             opacity: 1;
             visibility: visible;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
         }
 
-        .dropdown-item {
-            padding: 12px 20px;
+        .dropdown-header {
+            padding: 20px 24px 16px 24px;
+            background: #fafafa;
+            position: relative;
             display: flex;
             align-items: center;
-            gap: 12px;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        .dropdown-username {
+            font-weight: 600;
             color: #333;
-            text-decoration: none;
+            font-size: 16px;
+            flex: 1;
+            text-align: left;
+            letter-spacing: 0.3px;
+        }
+
+        .dropdown-profile-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d4af37, #b8860b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            flex-shrink: 0;
             transition: all 0.3s ease;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
 
-        .dropdown-item:last-child {
-            border-bottom: none;
+        .dropdown-profile-icon:hover {
+            transform: scale(1.05);
         }
 
-        .dropdown-item:hover {
-            background: rgba(212, 175, 55, 0.05);
-            color: #d4af37;
+        .dropdown-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+            margin: 0;
         }
 
-        .dropdown-item:first-child {
-            border-radius: 12px 12px 0 0;
+        .dropdown-content {
+            padding: 20px 24px 24px 24px;
+            background: #fafafa;
+            position: relative;
+            min-height: 60px;
         }
 
-        .dropdown-item:last-child {
-            border-radius: 0 0 12px 12px;
+        .logout-btn {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            width: 80px;
+            height: 32px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #e0e0e0, #d0d0d0);
+            color: #666;
+            border: none;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: absolute;
+            overflow: hidden;
+            letter-spacing: 0.2px;
+        }
+
+        .logout-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .logout-btn:hover::before {
+            left: 100%;
+        }
+
+        .logout-btn:hover {
+            background: linear-gradient(135deg, #d0d0d0, #c0c0c0);
+            transform: translateY(-2px);
+            box-shadow:
+                0 8px 25px rgba(0, 0, 0, 0.1),
+                0 4px 12px rgba(0, 0, 0, 0.08);
+            color: #555;
+        }
+
+        .logout-btn:active {
+            transform: translateY(0);
+            box-shadow:
+                0 4px 15px rgba(0, 0, 0, 0.08),
+                0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .logout-btn i {
+            font-size: 14px;
+            transition: transform 0.3s ease;
+        }
+
+        .logout-btn:hover i {
+            transform: translateX(2px);
         }
 
         /* Sidebar Styles */
@@ -1655,18 +1744,22 @@
         <div class="header-right">
             <div class="user-menu">
                 <div class="user-avatar" id="userAvatar">
-                    <i class="fas fa-user"></i>
+                    <span id="userInitial">U</span>
                 </div>
                 <div class="dropdown" id="userDropdown">
-                    <a href="#" class="dropdown-item" onclick="showProfile()">
-                        <i class="fas fa-user"></i>
-                        Profile
-                    </a>
-                    
-                    <a href="#" class="dropdown-item" onclick="logout()">
-                        <i class="fas fa-sign-out-alt"></i>
-                        Logout
-                    </a>
+                    <div class="dropdown-header">
+                        <div class="dropdown-username" id="dropdownUsername">Username</div>
+                        <div class="dropdown-profile-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-content">
+                        <button class="logout-btn" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2502,10 +2595,29 @@
             
             const user = currentUser.name ? currentUser : (adminData.name ? adminData : userData);
             const userAvatar = document.getElementById('userAvatar');
+            const userInitial = document.getElementById('userInitial');
+            const dropdownUsername = document.getElementById('dropdownUsername');
             
-            if (user.name && userAvatar) {
-                userAvatar.innerHTML = user.name.charAt(0).toUpperCase();
-                userAvatar.title = user.name;
+            if (user.name) {
+                // Update avatar with first letter
+                if (userInitial) {
+                    userInitial.textContent = user.name.charAt(0).toUpperCase();
+                }
+                if (userAvatar) {
+                    userAvatar.title = user.name;
+                }
+                // Update dropdown username
+                if (dropdownUsername) {
+                    dropdownUsername.textContent = user.name;
+                }
+            } else {
+                // Fallback if no name is available
+                if (userInitial) {
+                    userInitial.textContent = 'U';
+                }
+                if (dropdownUsername) {
+                    dropdownUsername.textContent = 'Username';
+                }
             }
         }
         
