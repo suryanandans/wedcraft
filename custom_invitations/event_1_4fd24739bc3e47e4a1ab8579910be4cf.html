@@ -62,6 +62,187 @@
         color: white;
         margin-top: 40px;
     }
+
+    /* Enhanced Responsive Design */
+    
+    /* Tablet View (768px - 1024px) */
+    @media (max-width: 1024px) and (min-width: 769px) {
+        header {
+            height: 55vh;
+            padding: 15px;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+        }
+        
+        section {
+            margin: 30px auto;
+            padding: 18px;
+            max-width: 800px;
+        }
+        
+        .details p {
+            font-size: 1rem;
+        }
+    }
+
+    /* Mobile View (max-width: 768px) */
+    @media (max-width: 768px) {
+        body {
+            font-size: 14px;
+        }
+        
+        header {
+            height: 50vh;
+            padding: 15px;
+            background-attachment: scroll;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        header h1 {
+            font-size: 2.2rem;
+            margin: 0;
+            line-height: 1.2;
+        }
+        
+        header p {
+            font-size: 1rem;
+            margin-top: 8px;
+        }
+        
+        section {
+            margin: 20px 15px;
+            padding: 20px 15px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            font-size: 1.4rem;
+            margin-bottom: 12px;
+        }
+        
+        .details p {
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+        
+        .details p strong {
+            display: inline-block;
+            min-width: 60px;
+        }
+        
+        footer {
+            padding: 15px;
+            margin-top: 30px;
+            font-size: 14px;
+        }
+    }
+
+    /* Small Mobile View (max-width: 480px) */
+    @media (max-width: 480px) {
+        header {
+            height: 45vh;
+            padding: 10px;
+        }
+        
+        header h1 {
+            font-size: 1.8rem;
+        }
+        
+        header p {
+            font-size: 0.9rem;
+        }
+        
+        section {
+            margin: 15px 10px;
+            padding: 15px 12px;
+        }
+        
+        h2 {
+            font-size: 1.2rem;
+        }
+        
+        .details p {
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+        }
+        
+        footer {
+            padding: 12px;
+            font-size: 13px;
+        }
+    }
+
+    /* Landscape Mobile View */
+    @media (max-width: 768px) and (orientation: landscape) {
+        header {
+            height: 70vh;
+        }
+        
+        header h1 {
+            font-size: 2rem;
+        }
+        
+        section {
+            margin: 15px;
+            padding: 15px;
+        }
+    }
+
+    /* High DPI / Retina Display Support */
+    @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+        header {
+            background-size: cover;
+        }
+    }
+
+    /* Touch device optimizations */
+    @media (hover: none) and (pointer: coarse) {
+        /* Ensure text is readable on touch devices */
+        body {
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+        body {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        
+        section {
+            background: #2d2d2d;
+            color: #e0e0e0;
+        }
+        
+        h2 {
+            color: #d4af37;
+        }
+        
+        footer {
+            background: #8b6f47;
+        }
+    }
+
+    /* Accessibility improvements */
+    @media (prefers-reduced-motion: reduce) {
+        * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
 </style>
 
 </head>

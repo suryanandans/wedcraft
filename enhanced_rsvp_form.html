@@ -267,22 +267,407 @@
             display: block;
         }
 
-        @media (max-width: 768px) {
+        /* Enhanced Responsive Design */
+        
+        /* Tablet View (768px - 1024px) */
+        @media (max-width: 1024px) and (min-width: 769px) {
             .container {
-                padding: 20px;
-                margin: 10px;
+                max-width: 700px;
+                padding: 35px;
+                margin: 15px auto;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+            }
+            
+            .header p {
+                font-size: 15px;
+            }
+            
+            .form-input, .form-select {
+                padding: 13px;
+                font-size: 15px;
+            }
+            
+            .attendance-option {
+                padding: 13px;
+            }
+            
+            .family-member-card {
+                padding: 18px;
+            }
+            
+            .submit-btn {
+                padding: 16px;
+                font-size: 17px;
+            }
+        }
+
+        /* Mobile View (max-width: 768px) */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+                background-attachment: scroll;
             }
 
+            .container {
+                padding: 25px 20px;
+                margin: 0;
+                border-radius: 15px;
+                max-width: none;
+            }
+
+            .header {
+                margin-bottom: 30px;
+                text-align: center;
+            }
+
+            .header h1 {
+                font-size: 26px;
+                margin-bottom: 8px;
+            }
+
+            .header p {
+                font-size: 14px;
+                color: #666;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            .form-label {
+                font-size: 15px;
+                margin-bottom: 6px;
+            }
+
+            .form-input, .form-select {
+                padding: 12px;
+                font-size: 16px; /* Prevents zoom on iOS */
+                border-radius: 10px;
+                border-width: 1px;
+            }
+
+            .form-input:focus, .form-select:focus {
+                border-width: 2px;
+            }
+
+            /* Attendance options */
             .attendance-options {
                 flex-direction: column;
+                gap: 12px;
+            }
+
+            .attendance-option {
+                padding: 14px;
+                border-radius: 10px;
+                font-size: 15px;
+                min-height: 50px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+            }
+
+            /* Family members section */
+            .family-members-section {
+                margin-top: 25px;
+                padding: 20px;
+                border-radius: 12px;
+            }
+
+            .section-title {
+                font-size: 18px;
+                margin-bottom: 15px;
+            }
+
+            .member-count-input {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+
+            .member-count-input label {
+                margin-bottom: 5px;
+            }
+
+            .member-count-input input {
+                width: 100px;
+                text-align: center;
+                align-self: flex-start;
+            }
+
+            /* Family member cards */
+            .family-member-card {
+                padding: 15px;
+                margin-bottom: 12px;
+                border-radius: 10px;
+            }
+
+            .member-header {
+                font-size: 15px;
+                margin-bottom: 12px;
             }
 
             .member-fields {
                 grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .member-fields .form-group {
+                margin-bottom: 0;
+            }
+
+            .member-fields .form-label {
+                font-size: 14px;
+                margin-bottom: 5px;
+            }
+
+            .member-fields .form-input {
+                padding: 10px 12px;
+                font-size: 15px;
+            }
+
+            /* Food preference options */
+            .food-preference-options {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .food-option {
+                padding: 10px;
+                font-size: 13px;
+                border-radius: 8px;
+                min-height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* Child checkbox */
+            .child-checkbox {
+                margin-top: 8px;
+                gap: 6px;
+            }
+
+            .child-checkbox input[type="checkbox"] {
+                width: 16px;
+                height: 16px;
+            }
+
+            .child-checkbox label {
+                font-size: 13px;
+            }
+
+            /* Submit button */
+            .submit-btn {
+                padding: 14px;
+                font-size: 16px;
+                border-radius: 10px;
+                margin-top: 25px;
+                min-height: 50px;
+            }
+
+            /* Alert messages */
+            .alert {
+                padding: 12px;
+                border-radius: 10px;
+                margin-bottom: 15px;
+                font-size: 14px;
+            }
+
+            .loading {
+                padding: 15px;
+            }
+        }
+
+        /* Small Mobile View (max-width: 480px) */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 20px 15px;
+                border-radius: 12px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .header p {
+                font-size: 13px;
+            }
+
+            .form-label {
+                font-size: 14px;
+            }
+
+            .form-input, .form-select {
+                padding: 10px;
+                font-size: 16px;
+                border-radius: 8px;
+            }
+
+            .attendance-option {
+                padding: 12px;
+                font-size: 14px;
+                min-height: 45px;
+            }
+
+            .family-members-section {
+                padding: 15px;
+            }
+
+            .section-title {
+                font-size: 16px;
+            }
+
+            .family-member-card {
+                padding: 12px;
+            }
+
+            .member-header {
+                font-size: 14px;
+            }
+
+            .food-option {
+                padding: 8px;
+                font-size: 12px;
+                min-height: 36px;
+            }
+
+            .submit-btn {
+                padding: 12px;
+                font-size: 15px;
+                min-height: 45px;
+            }
+
+            .child-checkbox label {
+                font-size: 12px;
+            }
+        }
+
+        /* Landscape Mobile View */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .container {
+                margin: 10px auto;
+                max-width: 600px;
+            }
+
+            .header {
+                margin-bottom: 20px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .family-members-section {
+                margin-top: 20px;
+                padding: 15px;
+            }
+
+            .member-fields {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
             }
 
             .food-preference-options {
-                flex-direction: column;
+                flex-direction: row;
+                gap: 8px;
+            }
+        }
+
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            .attendance-option:hover,
+            .food-option:hover,
+            .family-member-card:hover {
+                border-color: #e1e5e9;
+                background: white;
+            }
+
+            .submit-btn:hover {
+                transform: none;
+                box-shadow: none;
+            }
+
+            /* Larger touch targets */
+            .attendance-option,
+            .food-option {
+                min-height: 44px;
+            }
+
+            .submit-btn {
+                min-height: 48px;
+            }
+
+            .form-input, .form-select {
+                min-height: 44px;
+            }
+
+            .child-checkbox input[type="checkbox"] {
+                min-width: 18px;
+                min-height: 18px;
+            }
+        }
+
+        /* High DPI / Retina Display Support */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            body {
+                background-attachment: scroll;
+            }
+        }
+
+        /* Accessibility improvements */
+        @media (prefers-reduced-motion: reduce) {
+            .form-input, .form-select, .attendance-option, .food-option, .submit-btn {
+                transition: none;
+            }
+        }
+
+        /* Dark mode support (if device prefers dark mode) */
+        @media (prefers-color-scheme: dark) {
+            .container {
+                background: rgba(40, 40, 40, 0.95);
+                color: #f0f0f0;
+            }
+
+            .header h1 {
+                color: #f0f0f0;
+            }
+
+            .header p {
+                color: #ccc;
+            }
+
+            .form-label {
+                color: #f0f0f0;
+            }
+
+            .form-input, .form-select {
+                background: rgba(60, 60, 60, 0.8);
+                color: #f0f0f0;
+                border-color: #555;
+            }
+
+            .attendance-option, .food-option, .family-member-card {
+                background: rgba(60, 60, 60, 0.6);
+                border-color: #555;
+                color: #f0f0f0;
+            }
+
+            .family-members-section {
+                background: rgba(102, 126, 234, 0.1);
+                border-color: rgba(102, 126, 234, 0.2);
+            }
+
+            .section-title, .member-header {
+                color: #f0f0f0;
             }
         }
     </style>
