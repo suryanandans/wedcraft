@@ -3254,16 +3254,25 @@
             if (rsvp.family_members && rsvp.family_members.length > 0) {
                 const vegCount = rsvp.family_members.filter(m => m.food_preference === 'Vegetarian').length;
                 const nonVegCount = rsvp.family_members.filter(m => m.food_preference === 'Non-Vegetarian').length;
+                const childrenCount = rsvp.family_members.filter(m => m.is_child).length;
                 
+                let foodText = '';
                 if (vegCount > 0 && nonVegCount > 0) {
-                    return `Mixed (${vegCount}V, ${nonVegCount}NV)`;
+                    foodText = `Mixed (${vegCount}V, ${nonVegCount}NV)`;
                 } else if (vegCount > 0) {
-                    return `Vegetarian (${vegCount})`;
+                    foodText = `Vegetarian (${vegCount})`;
                 } else if (nonVegCount > 0) {
-                    return `Non-Vegetarian (${nonVegCount})`;
+                    foodText = `Non-Vegetarian (${nonVegCount})`;
                 } else {
-                    return 'Not specified';
+                    foodText = 'Not specified';
                 }
+                
+                // Add children info if any
+                if (childrenCount > 0) {
+                    foodText += ` + ${childrenCount} child${childrenCount > 1 ? 'ren' : ''}`;
+                }
+                
+                return foodText;
             } else if (rsvp.food_preference_summary) {
                 return rsvp.food_preference_summary;
             } else {
